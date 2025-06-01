@@ -1,0 +1,1514 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Heilbutt Hochseeangeln - GPS Seekarten Fangplaner</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden; 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a2e;
+            color: #fff;
+        }
+        body.fullscreen-active {
+            overflow: hidden !important;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        /* Navigation */
+        .nav-header {
+            background: linear-gradient(135deg, #0f3460, #16213e);
+            padding: 10px 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            flex-shrink: 0;
+        }
+
+        .nav-title {
+            font-size: 20px;
+            font-weight: bold;
+            text-align: center;
+            color: #4fbdba;
+            margin-bottom: 8px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .nav-tab {
+            padding: 8px 15px;
+            background: rgba(79, 189, 186, 0.2);
+            border: 1px solid #4fbdba;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #fff;
+            font-weight: 500;
+            font-size: 0.9em;
+        }
+        .nav-tab:hover { background: rgba(79, 189, 186, 0.4); transform: translateY(-1px); }
+        .nav-tab.active { background: #4fbdba; color: #0f3460; }
+
+        /* Content Area */
+        .content-area {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+        }
+
+        .content-section {
+            display: none;
+            padding: 15px;
+            width: 100%;
+        }
+        .content-section.active {
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        /* Map Section Layout */
+        .map-container {
+            background: #16213e;
+            border-radius: 12px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            position: relative; 
+            flex-grow: 1;
+            min-height: 0; 
+        }
+        
+        .gps-status-container, .map-controls {
+            flex-shrink: 0;
+            margin-bottom: 10px;
+        }
+        .gps-status-container { 
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 5px 10px;
+            background: rgba(0,0,0,0.7);
+            border-radius: 6px;
+            border: 1px solid #4fbdba;
+        }
+        .gps-status-text { font-size: 0.9em; }
+        .gps-indicator { width: 12px; height: 12px; border-radius: 50%; background: #ff6b6b; margin-right: 8px; }
+        .gps-indicator.active { background: #51cf66; animation: pulse 2s infinite; }
+        .gps-indicator.pending { background: #fcc419; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(81, 207, 102, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(81, 207, 102, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(81, 207, 102, 0); }
+        }
+
+        .map-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+        .control-btn, .data-btn {
+            padding: 8px 12px; font-size: 0.9em;
+            background: #4fbdba; color: #0f3460;
+            border: none; border-radius: 6px; cursor: pointer;
+            font-weight: 600; transition: all 0.3s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .control-btn:hover, .data-btn:hover { background: #7ec8e3; transform: translateY(-1px); }
+        .control-btn.gps-toggle-btn.active { background-color: #e67e22; }
+        .map-select, .form-control { /* .form-control hier hinzugefügt für Konsistenz */
+            padding: 8px 12px; font-size: 0.9em;
+            background: #2d3561; color: #fff;
+            border: 1px solid #4fbdba; border-radius: 6px; cursor: pointer;
+        }
+        .form-control { /* Spezifische Stile für Formularelemente beibehalten/erweitern */
+            width: 100%;
+            background: #16213e; 
+            border: 1px solid #4fbdba80;
+        }
+        .form-control:focus {
+            outline: none; border-color: #7ec8e3;
+            box-shadow: 0 0 0 2px rgba(79, 189, 186, 0.3);
+        }
+
+
+        .map-viewer {
+            flex-grow: 1;
+            background: #000;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden; 
+            touch-action: none; 
+        }
+        .map-viewer:fullscreen, .map-viewer:-webkit-full-screen, .map-viewer:-moz-full-screen {
+            width: 100%; height: 100%; background-color: #000;
+        }
+        #pdfCanvas, #markerCanvas { position: absolute; top: 0; left: 0; }
+        #pdfCanvas { cursor: grab; }
+        #pdfCanvas.grabbing { cursor: grabbing; }
+        #markerCanvas { pointer-events: none; z-index: 10; } 
+
+        .marker-info {
+            position: absolute; background: rgba(0,0,0,0.85); border: 1px solid #4fbdba;
+            border-radius: 6px; padding: 8px; color: #fff; font-size: 0.85em;
+            display: none; z-index: 100; max-width: 220px; pointer-events: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+        }
+        .marker-list-container {
+            flex-shrink: 0; 
+            margin-top: 15px;
+        }
+        .marker-list {
+            background: #2d3561; border-radius: 8px; padding: 10px;
+            max-height: 150px; 
+            overflow-y: auto; margin-bottom: 10px;
+        }
+        .marker-item {
+            background: #16213e; border: 1px solid #4fbdba80; border-radius: 6px;
+            padding: 8px; margin-bottom: 8px; display: flex;
+            justify-content: space-between; align-items: center; cursor: pointer;
+            font-size: 0.9em;
+        }
+         .marker-item:hover { background: #2a3b5e; }
+        .marker-coords { font-family: monospace; color: #7ec8e3; font-size: 0.9em; }
+
+        .data-controls-container {
+            background: #16213e; border-radius: 8px; padding: 10px;
+            display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;
+        }
+
+        /* Andere Sections (Fangbuch, Planer etc.) */
+        #catches, #planner, #checklists, #weather {
+            overflow-y: auto; 
+        }
+        .catch-entry, .day-plan, .checklist { 
+            background: #2d3561; border-radius: 8px; padding: 15px;
+            margin-bottom: 15px; border: 1px solid #4fbdba80;
+        }
+        .catch-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .catch-date { font-size: 1.1em; color: #7ec8e3; font-weight: 600; }
+        .catch-details p { margin-bottom: 5px; font-size: 0.95em; }
+        .catch-details strong { color: #4fbdba; }
+
+        .day-header { font-size: 1.2em; color: #4fbdba; margin-bottom: 10px; font-weight: 600; }
+        .milestone {
+            background: #16213e; border-left: 3px solid #7ec8e3; padding: 8px;
+            margin-bottom: 8px; border-radius: 4px; display: flex;
+            justify-content: space-between; align-items: flex-start; font-size: 0.9em;
+        }
+        .milestone div { flex-grow: 1; } 
+        .checklist-title { font-size: 1.1em; color: #4fbdba; margin-bottom: 10px; font-weight: 600; }
+        .checklist-item {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+            padding: 6px; background: #16213e; border-radius: 4px; font-size: 0.9em;
+        }
+        .checklist-item input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
+
+
+        /* Modal */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.7); z-index: 3000;
+            justify-content: center; align-items: center; padding: 15px;
+        }
+        .modal-content {
+            background: #2d3561; border-radius: 10px; padding: 20px;
+            max-width: 480px; /* Etwas breiter für mehr Platz */
+            width: 100%; max-height: 90vh; overflow-y: auto;
+            border: 1px solid #4fbdba; box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            position: relative;
+        }
+        .modal-header { font-size: 1.3em; color: #4fbdba; margin-bottom: 15px; font-weight: 600; }
+        .close-modal {
+            position: absolute; top: 10px; right: 10px;
+            font-size: 24px; cursor: pointer; color: #fff;
+            line-height: 1; padding: 5px;
+        }
+        .close-modal:hover { color: #ff6b6b; }
+
+        /* Formulare im Modal */
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 4px; color: #4fbdba; font-weight: 500; font-size: 0.9em; }
+        /* .form-control Stile wurden oben mit .map-select zusammengefasst und hier erweitert */
+        textarea.form-control { resize: vertical; min-height: 80px; }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-title { font-size: 18px; }
+            .nav-tab { padding: 6px 10px; font-size: 0.8em; }
+            .map-controls { gap: 5px; }
+            .control-btn, .data-btn, .map-select, .form-control { padding: 6px 10px; font-size: 0.8em; }
+            .marker-list { max-height: 120px; }
+        }
+    </style>
+</head>
+<body ondragstart="return false;" ondrop="return false;">
+    <div class="app-container">
+        <div class="nav-header">
+            <h1 class="nav-title">🎣 Heilbutt GPS Seekarten Fangplaner 🗺️</h1>
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="showSection('mapSection')">📍 Seekarten</div>
+                <div class="nav-tab" onclick="showSection('catches')">🐟 Fangbuch</div>
+                <div class="nav-tab" onclick="showSection('planner')">📅 Angelplaner</div>
+                <div class="nav-tab" onclick="showSection('checklists')">✅ Checklisten</div>
+                <div class="nav-tab" onclick="showSection('weather')">🌊 Gezeiten/Wetter</div>
+            </div>
+        </div>
+
+        <div class="content-area">
+            <div id="mapSection" class="content-section active">
+                <div class="map-container">
+                    <div class="gps-status-container">
+                        <div>
+                            <div class="gps-indicator" id="gpsIndicator"></div>
+                            <span id="gpsStatusText" class="gps-status-text">GPS Inaktiv.</span>
+                        </div>
+                        <button id="gpsToggleBtn" class="control-btn gps-toggle-btn" onclick="toggleGPSTracking()">📡 GPS</button>
+                    </div>
+                    <div class="map-controls">
+                        <select class="map-select" id="mapSelect" onchange="loadSelectedMap()" title="Seekarte auswählen">
+                            <option value="">Karte wählen...</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/Sklinna_map.pdf">Sklinna Übersicht</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_25_1.pdf">Nord 1:25.000 (1)</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_50_1.pdf">Nord 1:50.000 (1)</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_50_2.pdf">Nord 1:50.000 (2)</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_grupp_25_1.pdf">Nord Gruppe 1:25.000 (1)</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_grupp_25_2.pdf">Nord Gruppe 1:25.000 (2)</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_ost_50_1.pdf">Nord-Ost 1:50.000</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_west_25_1.pdf">Nord-West 1:25.000</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/nord_west_big_50_1.pdf">Nord-West 1:50.000</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/west_leka_25_1.pdf">West Leka 1:25.000 (1)</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/west_leka_25_2.pdf">West Leka 1:25.000 (2)</option>
+                            <option value="https://raw.githack.com/Jamancode/jamancode.github.io/main/Karten/west_leka_25_3.pdf">West Leka 1:25.000 (3)</option>
+                        </select>
+                        <button class="control-btn" onclick="zoomIn()" title="Hineinzoomen">🔍+</button>
+                        <button class="control-btn" onclick="zoomOut()" title="Herauszoomen">🔍-</button>
+                        <button class="control-btn" onclick="resetView()" title="Ansicht zurücksetzen">🔄</button>
+                        <button class="control-btn" id="markerModeBtn" onclick="toggleMarkerMode()" title="Marker setzen an/aus">📍 Marker</button>
+                        <button class="control-btn" id="fullscreenBtn" onclick="toggleFullScreen()" title="Vollbild an/aus">🖼️ Vollbild</button>
+                    </div>
+                    <div class="map-viewer" id="mapViewer">
+                        <canvas id="pdfCanvas"></canvas>
+                        <canvas id="markerCanvas"></canvas>
+                        <div class="marker-info" id="markerInfoPopup"></div>
+                    </div>
+                </div>
+                <div class="marker-list-container">
+                    <div class="marker-list" id="markerList">
+                        <h3 style="color: #4fbdba; margin-bottom: 10px; font-size: 1.1em;">📍 Gespeicherte Marker (Alle Karten)</h3>
+                        <div id="markerListContent">Keine Marker vorhanden.</div>
+                    </div>
+                    <div class="data-controls-container">
+                        <button class="data-btn" onclick="exportData()">💾 Export</button>
+                        <label class="data-btn" style="margin: 0;">📁 Import
+                            <input type="file" id="importFile" accept=".json" onchange="importData(event)" style="display: none;">
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div id="catches" class="content-section">
+                <h2 style="color: #4fbdba; margin-bottom: 15px;">🐟 Fangbuch</h2>
+                <button class="control-btn" onclick="showCatchModal()" style="margin-bottom: 15px;">➕ Neuen Fang eintragen</button>
+                <div id="catchList">Keine Fänge eingetragen.</div>
+            </div>
+            <div id="planner" class="content-section">
+                <h2 style="color: #4fbdba; margin-bottom: 15px;">📅 Angelplaner (01.-08. Juli 2025)</h2>
+                <div id="plannerDays">Planer wird initialisiert...</div>
+            </div>
+            <div id="checklists" class="content-section">
+                <h2 style="color: #4fbdba; margin-bottom: 15px;">✅ Checklisten</h2>
+                <div id="checklistsContent">Checklisten werden geladen...</div>
+            </div>
+            <div id="weather" class="content-section">
+                 <h2 style="color: #4fbdba; margin-bottom: 15px;">🌊 Gezeiten & Wetter</h2>
+                <div style="background: #2d3561; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                    <h3 style="color: #7ec8e3; margin-bottom: 10px;">📍 Leka, Norwegen</h3>
+                    <p style="margin-bottom: 10px; font-size: 0.9em;">Externe Links für aktuelle Informationen:</p>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <a href="https://de.tideschart.com/Norway/Trondelag/Leka/Leknes/Fishing/" target="_blank" class="control-btn" style="text-decoration: none; text-align: center; width: 100%;">
+                            🌊 Gezeiten & Beißzeiten (Tideschart)
+                        </a>
+                        <a href="https://kartverket.no/en/at-sea/se-havniva/result?id=803816&location=Leka" target="_blank" class="control-btn" style="text-decoration: none; text-align: center; width: 100%;">
+                            📊 Wasserstand (Kartverket)
+                        </a>
+                    </div>
+                </div>
+                <div style="background: #2d3561; border-radius: 8px; padding: 15px; font-size: 0.9em;">
+                    <h3 style="color: #7ec8e3; margin-bottom: 10px;">💡 Wichtige Angel-Infos</h3>
+                    <ul style="list-style: disc; padding-left: 20px;">
+                        <li>Beste Angelzeiten: +/- 2 Std. um Gezeitenwechsel.</li>
+                        <li>Mondphasen beachten.</li>
+                        <li>Wind < 15 Knoten ideal.</li>
+                        <li>Wassertemp.: 6-10°C optimal für Heilbutt.</li>
+                    </ul>
+                </div>
+            </div>
+        </div> <!-- Ende .content-area -->
+    </div> <!-- Ende .app-container -->
+
+    <!-- Modals -->
+    <div class="modal" id="markerModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('markerModal')">&times;</span>
+            <h3 class="modal-header">📍 Marker Details</h3>
+            <form id="markerForm">
+                <input type="hidden" id="markerEditId">
+                <div class="form-group">
+                    <label for="markerNameModal">Name des Spots</label>
+                    <input type="text" class="form-control" id="markerNameModal" required>
+                </div>
+                <div class="form-group">
+                    <label for="markerCoordsModal">GPS Koordinaten (automatisch)</label>
+                    <input type="text" class="form-control" id="markerCoordsModal" readonly>
+                </div>
+                 <input type="hidden" id="markerCanvasXModal">
+                 <input type="hidden" id="markerCanvasYModal">
+                <div class="form-group">
+                    <label for="markerDepthModal">Tiefe (m)</label>
+                    <input type="number" class="form-control" id="markerDepthModal" placeholder="z.B. 25">
+                </div>
+                <div class="form-group">
+                    <label for="markerNotesModal">Notizen</label>
+                    <textarea class="form-control" id="markerNotesModal" placeholder="z.B. Kante, guter Drift, Köderfarbe..."></textarea>
+                </div>
+                 <div class="form-group">
+                    <label for="markerTypeModal">Marker Typ</label>
+                    <select id="markerTypeModal" class="form-control">
+                        <option value="spot">Hotspot</option>
+                        <option value="structure">Struktur</option>
+                        <option value="warning">Warnung</option>
+                        <option value="anchor">Ankerplatz</option>
+                        <option value="catch">Fang</option>
+                        <option value="note">Notiz</option>
+                    </select>
+                </div>
+                <button type="submit" class="control-btn" style="width: 100%;">💾 Marker Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <div class="modal" id="catchModal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal('catchModal')">&times;</span>
+            <h3 class="modal-header">🐟 Neuer Fangeintrag</h3>
+            <form id="catchForm">
+                <div class="form-group">
+                    <label for="catchDateTime">Datum & Zeit</label>
+                    <input type="datetime-local" class="form-control" id="catchDateTime" required>
+                </div>
+                <div class="form-group">
+                    <label for="catchGPS">GPS Position</label>
+                    <input type="text" class="form-control" id="catchGPS" placeholder="Wird autom. gefüllt, wenn GPS aktiv">
+                    <button type="button" class="control-btn" onclick="getCurrentGPSForCatchField()" style="margin-top: 5px; font-size: 0.8em; padding: 5px 8px;">📡 Aktuelle Position</button>
+                </div>
+                <div class="form-group">
+                    <label for="catchFishType">Fischart</label>
+                    <select id="catchFishType" class="form-control">
+                        <option value="">-- Fischart wählen --</option>
+                        <option value="Heilbutt">Heilbutt</option>
+                        <option value="Dorsch">Dorsch</option>
+                        <option value="Schellfisch">Schellfisch</option>
+                        <option value="Köhler">Köhler (Seelachs)</option>
+                        <option value="Leng">Leng</option>
+                        <option value="Lumb">Lumb</option>
+                        <option value="Rotbarsch">Rotbarsch</option>
+                        <option value="Steinbeißer">Steinbeißer (Seewolf)</option>
+                        <option value="Makrele">Makrele</option>
+                        <option value="Hering">Hering</option>
+                        <option value="Pollack">Pollack</option>
+                        <option value="Wittling">Wittling</option>
+                        <option value="Sonstige">Sonstige</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="catchWeight">Gewicht (kg)</label>
+                    <input type="number" class="form-control" id="catchWeight" step="0.01" placeholder="z.B. 12.5">
+                </div>
+                <div class="form-group">
+                    <label for="catchLength">Länge (cm)</label>
+                    <input type="number" class="form-control" id="catchLength" placeholder="z.B. 110">
+                </div>
+                <div class="form-group">
+                    <label for="catchBait">Köder</label>
+                    <select id="catchBait" class="form-control">
+                        <option value="">-- Köder wählen --</option>
+                        <option value="Pilker">Pilker</option>
+                        <option value="Gummifisch (Shad)">Gummifisch (Shad)</option>
+                        <option value="Naturköder (ganzer Fisch)">Naturköder (ganzer Fisch)</option>
+                        <option value="Naturköder (Fischfetzen)">Naturköder (Fischfetzen)</option>
+                        <option value="System (Deadbait)">System (z.B. Deadbait-System)</option>
+                        <option value="Jig / Bleikopf">Jig / Bleikopf mit Twister/Gummi</option>
+                        <option value="Wobbler">Wobbler</option>
+                        <option value="Spoon / Blinker">Spoon / Blinker</option>
+                        <option value="Fliege (Streamer)">Fliege (Streamer)</option>
+                        <option value="Kombination">Kombination (z.B. Pilker + Beifänger)</option>
+                        <option value="Sonstige">Sonstige</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="catchReleased">Ausgesetzt?</label>
+                    <select id="catchReleased" class="form-control">
+                        <option value="nein" selected>Nein, entnommen</option>
+                        <option value="ja">Ja, released (C&R)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="catchNotesModalForm">Notizen / Wetter / Strömung</label>
+                    <textarea class="form-control" id="catchNotesModalForm" placeholder="z.B. Starker Westwind, ablaufendes Wasser, Biss in Grundnähe..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label style="display: flex; align-items: center;">
+                        <input type="checkbox" id="catchMarkerCheck" style="width: 18px; height: 18px; margin-right: 8px;"> Als Spot auf aktueller Karte markieren
+                    </label>
+                </div>
+                <button type="submit" class="control-btn" style="width: 100%;">💾 Fang Speichern</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // --- Global variables ---
+        let pdfDoc = null, pageNum = 1, pageRendering = false, pageNumPending = null;
+        let scale = 1.0, initialScale = 1.0;
+        const MIN_SCALE = 0.05, MAX_SCALE = 20.0;
+        const canvas = document.getElementById('pdfCanvas'), ctx = canvas.getContext('2d');
+        const markerCanvas = document.getElementById('markerCanvas'), markerCtx = markerCanvas.getContext('2d');
+        const markerInfoPopup = document.getElementById('markerInfoPopup');
+        const mapViewer = document.getElementById('mapViewer');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        
+        let currentMapUrl = '', mapOffset = { x: 0, y: 0 };
+        let isDragging = false, dragStart = { x: 0, y: 0 }, lastTouchDistance = null;
+        let markerMode = false;
+        let markers = [], catches = [], plannerData = {}, checklists = {};
+        let currentGPS = null, gpsWatchId = null, isGPSTrackingActive = false;
+
+        const GPS_STATUS_TEXT = {
+            INACTIVE: "GPS Inaktiv. HTTPS & Erlaubnis nötig.",
+            PENDING: "GPS Signal wird gesucht...",
+            ACTIVE: (lat, lng, acc) => `GPS: ${lat.toFixed(5)}, ${lng.toFixed(5)} (±${Math.round(acc)}m)`,
+            ERROR: (msg) => `GPS Fehler: ${msg}`
+        };
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // --- Debounce Function ---
+        function debounce(func, delay) {
+            let timeout;
+            return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), delay); };
+        }
+        const debouncedRenderPage = debounce(queueRenderPage, 80);
+
+        // --- DATA PERSISTENCE ---
+        const STORAGE_KEY = 'heilbuttFangplanerData_v3.4'; // Version erhöht für detailliertes Fangbuch
+        function saveData() {
+            const dataToSave = { markers, catches, plannerData, checklists, version: STORAGE_KEY.split('_v')[1], lastUpdated: new Date().toISOString() };
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+                console.log("Daten gespeichert.");
+            } catch (e) { console.error("Speicherfehler:", e); alert("Daten konnten nicht gespeichert werden. Speicher voll?"); }
+        }
+
+        function loadData() {
+            try {
+                const storedData = localStorage.getItem(STORAGE_KEY);
+                if (storedData) {
+                    const data = JSON.parse(storedData);
+                    markers = data.markers || [];
+                    markers.forEach(m => { 
+                        if (m.type === undefined) m.type = m.markerType || 'spot'; 
+                        delete m.markerType;
+                        if (m.mapUrl === undefined) m.mapUrl = ''; 
+                    });
+                    catches = data.catches || [];
+                    // Alte Fangeinträge (vor v3.4) hatten fishType und bait als String.
+                    // Neue Einträge haben fishTypeSelected und baitSelected.
+                    // Dies ist für die Abwärtskompatibilität nicht kritisch, da die Anzeige
+                    // einfach die neuen Felder bevorzugt. Alte Felder werden ignoriert.
+                    plannerData = data.plannerData || {};
+                    checklists = data.checklists || {}; 
+                    console.log("Daten geladen.");
+                } else {
+                    console.log("Keine gespeicherten Daten gefunden, initialisiere Standard-Checklisten.");
+                    initializeDefaultChecklists(); 
+                }
+            } catch (e) {
+                console.error("Fehler beim Laden der Daten:", e);
+                alert("Gespeicherte Daten konnten nicht geladen werden. Evtl. korrupt?");
+                initializeDefaultChecklists(); 
+            }
+            updateUI();
+        }
+        
+        function updateUI() {
+            if (typeof updateMarkerList === "function") updateMarkerList();
+            if (typeof updateCatchList === "function") updateCatchList();
+            if (typeof initializePlanner === "function") initializePlanner(); 
+            if (typeof initializeChecklists === "function") initializeChecklists(); 
+            if (pdfDoc && typeof drawMarkers === "function") drawMarkers();
+        }
+        
+        // --- Navigation ---
+        function showSection(sectionId) {
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            const currentSection = document.getElementById(sectionId);
+            if (currentSection) {
+                currentSection.classList.add('active');
+            } else {
+                console.warn(`Sektion mit ID "${sectionId}" nicht gefunden.`);
+                document.getElementById('mapSection').classList.add('active');
+                 Array.from(document.querySelectorAll('.nav-tab')).find(t => t.getAttribute('onclick') === `showSection('mapSection')`)?.classList.add('active');
+                 return;
+            }
+            
+            const activeTab = Array.from(document.querySelectorAll('.nav-tab')).find(t => t.getAttribute('onclick') === `showSection('${sectionId}')`);
+            if (activeTab) activeTab.classList.add('active');
+
+            if (sectionId === 'planner' && typeof initializePlanner === 'function') initializePlanner();
+            else if (sectionId === 'checklists' && typeof initializeChecklists === 'function') initializeChecklists();
+        }
+
+        // --- PDF Loading and Rendering ---
+        function loadSelectedMap() {
+            const select = document.getElementById('mapSelect');
+            const url = select.value;
+            if (url) { 
+                console.log(`Lade Karte: ${url}`);
+                loadPDF(url); 
+            } else {
+                console.log("Keine Karte ausgewählt.");
+                if(pdfDoc) {
+                    pdfDoc = null; 
+                    currentMapUrl = ''; 
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    markerCtx.clearRect(0, 0, markerCanvas.width, markerCanvas.height);
+                    console.log("Kartenansicht geleert.");
+                }
+            }
+        }
+
+        function loadPDF(url) {
+            currentMapUrl = url; 
+            mapOffset = { x: 0, y: 0 }; 
+            console.log("Versuche PDF zu laden von:", url);
+            const loadingTask = pdfjsLib.getDocument(url);
+            loadingTask.promise.then(pdf => {
+                console.log("PDF erfolgreich geladen:", pdf.numPages, "Seiten");
+                pdfDoc = pdf; 
+                pageNum = 1;
+                renderPage(pageNum, true); 
+                localStorage.setItem('lastSelectedMap', url);
+            }).catch(error => { 
+                console.error('PDF Ladefehler für URL:', url, error); 
+                alert(`Karte "${url.split('/').pop()}" konnte nicht geladen werden. Fehler: ${error.message}`);
+                pdfDoc = null; currentMapUrl = '';
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                markerCtx.clearRect(0, 0, markerCanvas.width, markerCanvas.height);
+            });
+        }
+
+        function renderPage(num, forceFit = false) {
+            if (!pdfDoc) {
+                console.warn("renderPage aufgerufen, aber kein pdfDoc geladen.");
+                return;
+            }
+            pageRendering = true;
+            // console.log(`Rendere Seite ${num} mit forceFit=${forceFit}, aktueller Scale=${scale.toFixed(3)}`);
+
+            pdfDoc.getPage(num).then(page => {
+                let viewport;
+                const mapViewerWidth = mapViewer.clientWidth;
+                const mapViewerHeight = mapViewer.clientHeight;
+
+                if (mapViewerWidth === 0 || mapViewerHeight === 0) {
+                    // console.warn("mapViewer hat keine Dimensionen, Rendern verzögert.");
+                    setTimeout(() => renderPage(num, forceFit), 100); 
+                    pageRendering = false;
+                    return;
+                }
+
+                if (forceFit) {
+                    const unscaledPageViewport = page.getViewport({ scale: 1.0 });
+                    const scaleToWidth = mapViewerWidth / unscaledPageViewport.width;
+                    const scaleToHeight = mapViewerHeight / unscaledPageViewport.height;
+                    initialScale = Math.min(scaleToWidth, scaleToHeight); 
+                    scale = initialScale;
+                    scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, scale));
+                    // console.log(`forceFit: neue Skala berechnet: ${scale.toFixed(3)}`);
+                    
+                    viewport = page.getViewport({ scale: scale });
+                    mapOffset.x = (mapViewerWidth - viewport.width) / 2;
+                    mapOffset.y = (mapViewerHeight - viewport.height) / 2;
+                    // console.log(`forceFit: neuer mapOffset: x=${mapOffset.x.toFixed(1)}, y=${mapOffset.y.toFixed(1)}`);
+                } else {
+                    viewport = page.getViewport({ scale: scale });
+                }
+                
+                applyTransform();
+                
+                canvas.height = viewport.height; 
+                canvas.width = viewport.width;
+                markerCanvas.height = viewport.height; 
+                markerCanvas.width = viewport.width;
+                // console.log(`Canvas Dimensionen: ${canvas.width.toFixed(0)}x${canvas.height.toFixed(0)}`);
+
+                page.render({ canvasContext: ctx, viewport: viewport }).promise.then(() => {
+                    // console.log(`Seite ${num} erfolgreich gerendert.`);
+                    pageRendering = false;
+                    if (pageNumPending !== null) { 
+                        renderPage(pageNumPending); 
+                        pageNumPending = null; 
+                    }
+                    drawMarkers(); 
+                }).catch(err => { 
+                    console.error("Renderfehler auf Seite", num, err); 
+                    pageRendering = false; 
+                    alert(`Renderfehler: ${err.message}`);
+                });
+            }).catch(pageErr => {
+                console.error("Fehler beim Holen der PDF Seite", num, pageErr);
+                pageRendering = false;
+                alert(`Fehler beim Laden der Seite ${num}: ${pageErr.message}`);
+            });
+        }
+        function queueRenderPage() { 
+            if (!pdfDoc) return; 
+            if (pageRendering) { 
+                pageNumPending = pageNum; 
+            } else { 
+                renderPage(pageNum); 
+            } 
+        }
+
+        // --- Zoom & Pan ---
+        function zoom(zoomFactor, pivotX, pivotY) {
+            if (!pdfDoc) return;
+            
+            const oldScale = scale;
+            let newScale = scale * zoomFactor;
+            newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, newScale));
+
+            if (newScale === oldScale) return;
+
+            scale = newScale;
+
+            if (pivotX === undefined || pivotY === undefined) {
+                pivotX = mapViewer.clientWidth / 2;
+                pivotY = mapViewer.clientHeight / 2;
+            }
+            
+            const pointOnPdfX = (pivotX - mapOffset.x) / oldScale;
+            const pointOnPdfY = (pivotY - mapOffset.y) / oldScale;
+
+            mapOffset.x = pivotX - (pointOnPdfX * scale);
+            mapOffset.y = pivotY - (pointOnPdfY * scale);
+            
+            applyTransform();
+            debouncedRenderPage(); 
+        }
+        function zoomIn() { zoom(1.25); }
+        function zoomOut() { zoom(1/1.25); }
+        function resetView() { if (!pdfDoc) return; renderPage(pageNum, true); }
+        
+        function applyTransform() {
+            const transform = `translate(${mapOffset.x.toFixed(3)}px, ${mapOffset.y.toFixed(3)}px)`;
+            canvas.style.transform = transform;
+            markerCanvas.style.transform = transform;
+        }
+
+        mapViewer.addEventListener('mousedown', handleDragStart);
+        mapViewer.addEventListener('mousemove', handleDrag);
+        document.addEventListener('mouseup', handleDragEnd);
+
+        mapViewer.addEventListener('touchstart', e => {
+            if (e.touches.length === 1) {
+                handleDragStart(e.touches[0]);
+            } else if (e.touches.length === 2) {
+                isDragging = false; 
+                lastTouchDistance = getTouchDistance(e.touches[0], e.touches[1]);
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+        mapViewer.addEventListener('touchmove', e => {
+            if (e.touches.length === 1 && isDragging) {
+                handleDrag(e.touches[0]);
+            } else if (e.touches.length === 2 && lastTouchDistance) {
+                const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                const rect = mapViewer.getBoundingClientRect();
+                const pivotX = (e.touches[0].clientX + e.touches[1].clientX) / 2 - rect.left;
+                const pivotY = (e.touches[0].clientY + e.touches[1].clientY) / 2 - rect.top;
+                zoom(currentDistance / lastTouchDistance, pivotX, pivotY);
+                lastTouchDistance = currentDistance;
+            }
+            e.preventDefault();
+        }, { passive: false });
+
+        mapViewer.addEventListener('touchend', e => {
+            if (e.touches.length < 2) lastTouchDistance = null;
+            if (e.touches.length === 0 && isDragging) handleDragEnd();
+        });
+        
+        function getTouchDistance(t1, t2) { const dx = t1.clientX - t2.clientX, dy = t1.clientY - t2.clientY; return Math.sqrt(dx * dx + dy * dy); }
+
+        function handleDragStart(e) {
+            if (!mapViewer.contains(e.target) && e.target !== mapViewer && e.target !== canvas) return;
+
+            if (markerMode) {
+                const rect = mapViewer.getBoundingClientRect();
+                const clickXInViewer = e.clientX - rect.left;
+                const clickYInViewer = e.clientY - rect.top;
+                
+                const xOnPage = (clickXInViewer - mapOffset.x) / scale;
+                const yOnPage = (clickYInViewer - mapOffset.y) / scale;
+                showMarkerModal(xOnPage, yOnPage);
+                return;
+            }
+            if (e.button !== 0 && e.type === 'mousedown') return;
+            isDragging = true;
+            pdfCanvas.classList.add('grabbing');
+            dragStart.x = e.clientX - mapOffset.x;
+            dragStart.y = e.clientY - mapOffset.y;
+        }
+        function handleDrag(e) {
+            if (!isDragging) return;
+            mapOffset.x = e.clientX - dragStart.x;
+            mapOffset.y = e.clientY - dragStart.y;
+            applyTransform();
+        }
+        function handleDragEnd() {
+            if (isDragging) {
+                isDragging = false;
+                pdfCanvas.classList.remove('grabbing');
+            }
+        }
+        mapViewer.addEventListener('wheel', e => {
+            if (!pdfDoc) return;
+            e.preventDefault();
+            const zoomFactor = e.deltaY < 0 ? 1.15 : 1/1.15;
+            const rect = mapViewer.getBoundingClientRect();
+            zoom(zoomFactor, e.clientX - rect.left, e.clientY - rect.top);
+        }, { passive: false });
+
+
+        // --- Marker System ---
+        const MARKER_COLORS = { 
+            spot: '#ff4757', warning: '#ffa502', structure: '#1e90ff', 
+            anchor: '#32cd32', note: '#aaaaaa', catch: '#9932cc', default: '#efefef'
+        };
+
+        function toggleMarkerMode() {
+            if (!pdfDoc) { alert("Bitte zuerst eine Karte laden, um Marker zu setzen."); return; }
+            markerMode = !markerMode;
+            const btn = document.getElementById('markerModeBtn');
+            btn.textContent = markerMode ? '✖️ Modus Beenden' : '📍 Marker';
+            btn.style.background = markerMode ? '#ff6b6b' : '#4fbdba';
+            mapViewer.style.cursor = markerMode ? 'crosshair' : 'default';
+            pdfCanvas.style.cursor = markerMode ? 'crosshair' : (isDragging ? 'grabbing' : 'grab');
+             if (!markerMode) markerInfoPopup.style.display = 'none';
+        }
+
+        function showMarkerModal(canvasXOnPage, canvasYOnPage) {
+            document.getElementById('markerForm').reset();
+            document.getElementById('markerEditId').value = ''; 
+            const coords = pixelToGPS(canvasXOnPage, canvasYOnPage); 
+            document.getElementById('markerCoordsModal').value = `${coords.lat.toFixed(6)}, ${coords.lng.toFixed(6)}`;
+            document.getElementById('markerCanvasXModal').value = canvasXOnPage; 
+            document.getElementById('markerCanvasYModal').value = canvasYOnPage;
+            document.getElementById('markerModal').style.display = 'flex';
+            document.getElementById('markerNameModal').focus();
+        }
+        
+        const MAP_GEO_BOUNDS = { north: 65.35, south: 64.85, west: 10.50, east: 12.00 }; 
+
+        function pixelToGPS(xOnPage, yOnPage) {
+            if (!pdfDoc || scale === 0 || canvas.width === 0 || canvas.height === 0) {
+                // console.warn("pixelToGPS: Ungültiger Zustand für Berechnung.");
+                return { lat: 0, lng: 0 }; 
+            }
+            const unscaledPdfWidth = canvas.width / scale; 
+            const unscaledPdfHeight = canvas.height / scale;
+
+            const lat = MAP_GEO_BOUNDS.north - (yOnPage / unscaledPdfHeight) * (MAP_GEO_BOUNDS.north - MAP_GEO_BOUNDS.south);
+            const lng = MAP_GEO_BOUNDS.west + (xOnPage / unscaledPdfWidth) * (MAP_GEO_BOUNDS.east - MAP_GEO_BOUNDS.west);
+            return { lat, lng };
+        }
+
+        function gpsToPixel(lat, lng) {
+            if (!pdfDoc || scale === 0 || canvas.width === 0 || canvas.height === 0) {
+                // console.warn("gpsToPixel: Ungültiger Zustand für Berechnung.");
+                return { x: -1, y: -1 };
+            }
+            const unscaledPdfWidth = canvas.width / scale;
+            const unscaledPdfHeight = canvas.height / scale;
+
+            const xOnPage = ((lng - MAP_GEO_BOUNDS.west) / (MAP_GEO_BOUNDS.east - MAP_GEO_BOUNDS.west)) * unscaledPdfWidth;
+            const yOnPage = ((MAP_GEO_BOUNDS.north - lat) / (MAP_GEO_BOUNDS.north - MAP_GEO_BOUNDS.south)) * unscaledPdfHeight;
+            return { x: xOnPage, y: yOnPage };
+        }
+
+        function drawMarkers() {
+            if (!pdfDoc || !markerCtx) return; 
+            markerCtx.clearRect(0,0,markerCanvas.width,markerCanvas.height); 
+            
+            const pinBaseSize = 22; 
+            const pinHeadRadius = 4;
+            const textOffsetY = 25;
+            const minPinDrawScale = 0.1;
+
+            if (scale < minPinDrawScale) return;
+
+            markers.forEach(marker => { 
+                if (marker.mapUrl !== currentMapUrl) {
+                    return; 
+                }
+
+                const {x:xOnPage, y:yOnPage} = gpsToPixel(marker.lat, marker.lng); 
+                const displayX = xOnPage * scale; 
+                const displayY = yOnPage * scale; 
+
+                const screenX = displayX + mapOffset.x;
+                const screenY = displayY + mapOffset.y;
+                const margin = 100 * scale; 
+                if (screenX < -margin || screenX > mapViewer.clientWidth + margin ||
+                    screenY < -margin || screenY > mapViewer.clientHeight + margin) {
+                    return; 
+                }
+
+                const color = MARKER_COLORS[marker.type] || MARKER_COLORS.default;
+                markerCtx.fillStyle = color;
+                markerCtx.beginPath(); 
+                
+                const currentPinSize = Math.max(pinBaseSize * 0.3, pinBaseSize * Math.sqrt(scale / initialScale));
+                const currentHeadRadius = Math.max(pinHeadRadius * 0.3, pinHeadRadius * Math.sqrt(scale/ initialScale));
+                const curveFactor1 = 0.3 * currentPinSize;
+                const curveFactor2 = 0.55 * currentPinSize;
+
+                markerCtx.moveTo(displayX, displayY); 
+                markerCtx.bezierCurveTo(displayX - curveFactor1, displayY - curveFactor2, 
+                                        displayX - curveFactor1, displayY - currentPinSize, 
+                                        displayX, displayY - currentPinSize);
+                markerCtx.bezierCurveTo(displayX + curveFactor1, displayY - currentPinSize, 
+                                        displayX + curveFactor1, displayY - curveFactor2, 
+                                        displayX, displayY);
+                markerCtx.fill();
+                markerCtx.strokeStyle = '#000000bf';
+                markerCtx.lineWidth = Math.max(0.5, 1.5 * Math.sqrt(scale/initialScale) * 0.5);
+                markerCtx.stroke(); 
+                
+                markerCtx.beginPath();
+                markerCtx.arc(displayX, displayY - currentPinSize, currentHeadRadius, 0, Math.PI * 2);
+                markerCtx.fillStyle = '#ffffffcc';
+                markerCtx.fill();
+
+                if (scale > 0.25) { 
+                    markerCtx.fillStyle = '#fff';
+                    const fontSize = Math.max(9, Math.min(15, 11 * Math.sqrt(scale/initialScale)));
+                    markerCtx.font = `bold ${fontSize}px Arial`;
+                    markerCtx.textAlign = 'center';
+                    markerCtx.shadowColor = "black"; 
+                    markerCtx.shadowOffsetX = 1; markerCtx.shadowOffsetY = 1; markerCtx.shadowBlur = 3;
+                    markerCtx.fillText(marker.name, displayX, displayY - currentPinSize - (textOffsetY * Math.sqrt(scale/initialScale) * 0.3));
+                    markerCtx.shadowColor = "transparent"; 
+                }
+            }); 
+        }
+        
+        mapViewer.addEventListener('mousemove', e => { 
+            if (markerMode || !pdfDoc || !markers.length || isDragging) {
+                markerInfoPopup.style.display='none'; return;
+            }
+            const rect = mapViewer.getBoundingClientRect();
+            const mouseXInViewer = e.clientX - rect.left;
+            const mouseYInViewer = e.clientY - rect.top;
+            let foundMarker = null;
+            let closestDistanceSq = Infinity;
+            const pinHitboxBaseSize = 25;
+
+            for (const marker of markers) {
+                if (marker.mapUrl !== currentMapUrl) continue;
+
+                const {x:xOnPage, y:yOnPage} = gpsToPixel(marker.lat, marker.lng);
+                const markerScaledX = xOnPage * scale; 
+                const markerScaledY = yOnPage * scale; 
+                const markerInViewerX = markerScaledX + mapOffset.x;
+                const markerInViewerY = markerScaledY + mapOffset.y;
+
+                const currentPinSize = Math.max(22 * 0.3, 22 * Math.sqrt(scale / initialScale));
+                const pinTipY = markerInViewerY;
+                const pinHeadY = markerInViewerY - currentPinSize;
+                const hitRadiusX = (pinHitboxBaseSize * 0.5) * Math.sqrt(scale/initialScale);
+                const hitRadiusY = currentPinSize;
+
+                if (mouseXInViewer >= markerInViewerX - hitRadiusX && mouseXInViewer <= markerInViewerX + hitRadiusX &&
+                    mouseYInViewer >= pinHeadY && mouseYInViewer <= pinTipY) {
+                    const dx = mouseXInViewer - markerInViewerX;
+                    const dy = mouseYInViewer - (markerInViewerY - currentPinSize / 2);
+                    const distanceSq = dx*dx + dy*dy;
+                    if (distanceSq < closestDistanceSq) {
+                        foundMarker = marker;
+                        closestDistanceSq = distanceSq;
+                    }
+                }
+            }
+
+            if (foundMarker) {
+                showMarkerInfoPopup(foundMarker, mouseXInViewer, mouseYInViewer);
+            } else {
+                markerInfoPopup.style.display = 'none';
+            }
+        });
+
+        function showMarkerInfoPopup(marker, mouseXInViewer, mouseYInViewer) {
+            markerInfoPopup.innerHTML = `<strong>${marker.name}</strong> (${marker.type})<br>
+                                        Lat: ${marker.lat.toFixed(5)}, Lon: ${marker.lng.toFixed(5)}
+                                        ${marker.mapUrl ? `<br><small>Karte: ${marker.mapUrl.split('/').pop().replace('.pdf','')}</small>` : ''}
+                                        ${marker.depth ? `<br>Tiefe: ${marker.depth}m` : ''}
+                                        ${marker.notes ? `<br><small><em>${marker.notes.substring(0,50)}${marker.notes.length > 50 ? '...' : ''}</em></small>` : ''}`;
+            
+            let popupX = mouseXInViewer + 15;
+            let popupY = mouseYInViewer - 10; 
+            const approxPopupWidth = 200;
+            const approxPopupHeight = markerInfoPopup.offsetHeight || 80;
+
+            if (popupX + approxPopupWidth > mapViewer.clientWidth) popupX = mouseXInViewer - 15 - approxPopupWidth;
+            if (popupY + approxPopupHeight > mapViewer.clientHeight) popupY = mouseYInViewer - 10 - approxPopupHeight;
+            if (popupX < 0) popupX = 5;
+            if (popupY < 0) popupY = 5;
+
+            markerInfoPopup.style.left = `${popupX}px`;
+            markerInfoPopup.style.top = `${popupY}px`;
+            markerInfoPopup.style.display = 'block';
+        }
+
+        function updateMarkerList() {
+            const listContent = document.getElementById('markerListContent');
+            if (!listContent) return;
+            if (markers.length === 0) {
+                listContent.innerHTML = 'Keine Marker vorhanden.'; return;
+            }
+            listContent.innerHTML = markers
+                .sort((a,b) => a.name.localeCompare(b.name))
+                .map(marker => `
+                <div class="marker-item" onclick="panToMarker(${marker.id})" title="Zum Marker springen: ${marker.name} (Karte: ${marker.mapUrl ? marker.mapUrl.split('/').pop().replace('.pdf','') : 'Unbekannt'})">
+                    <div>
+                        <strong style="color: ${MARKER_COLORS[marker.type] || MARKER_COLORS.default};">&#x25CF;</strong>
+                        <strong>${marker.name}</strong> <small>(${marker.type})</small><br>
+                        <span class="marker-coords">${marker.lat.toFixed(5)}, ${marker.lng.toFixed(5)}</span>
+                        ${marker.mapUrl ? `<br><small style="font-size:0.8em; opacity:0.7;">Karte: ${marker.mapUrl.split('/').pop().replace('.pdf','')}</small>` : ''}
+                        ${marker.depth ? ` | Tiefe: ${marker.depth}m` : ''}
+                    </div>
+                    <button class="control-btn" onclick="event.stopPropagation(); deleteMarker(${marker.id})" style="background:#cc3333; color:white; padding:4px 8px; min-width:auto; font-size:0.8em;" title="Marker löschen">❌</button>
+                </div>
+            `).join('');
+        }
+        
+        function panToMarkerLogic(marker) {
+            if (!pdfDoc) return;
+            
+            const targetScale = Math.max(0.5, initialScale); 
+            if (scale < targetScale * 0.8 || scale > targetScale * 2.5) {
+                scale = targetScale; 
+            }
+
+            const {x:xOnPage, y:yOnPage} = gpsToPixel(marker.lat, marker.lng);
+            const viewerWidth = mapViewer.clientWidth; 
+            const viewerHeight = mapViewer.clientHeight;
+            
+            mapOffset.x = (viewerWidth / 2) - (xOnPage * scale);
+            mapOffset.y = (viewerHeight / 2) - (yOnPage * scale);
+            
+            applyTransform();
+            queueRenderPage(); 
+            setTimeout(() => {
+                 showMarkerInfoPopup(marker, viewerWidth / 2, viewerHeight / 2);
+            }, 200);
+        }
+
+        function panToMarker(markerId) {
+            const marker = markers.find(m => m.id === markerId);
+            if (!marker) { console.warn(`Marker mit ID ${markerId} nicht gefunden.`); return; }
+
+            if (marker.mapUrl && marker.mapUrl !== currentMapUrl) {
+                if (confirm(`Marker "${marker.name}" wurde auf Karte "${marker.mapUrl.split('/').pop().replace('.pdf','')}" gesetzt. Möchten Sie diese Karte jetzt laden?`)) {
+                    const mapSelect = document.getElementById('mapSelect');
+                    if (Array.from(mapSelect.options).some(opt => opt.value === marker.mapUrl)) {
+                        mapSelect.value = marker.mapUrl;
+                        
+                        const loadingPromise = new Promise((resolve, reject) => {
+                            const tempCurrentMapUrl = marker.mapUrl; 
+                            currentMapUrl = tempCurrentMapUrl; 
+                            mapOffset = { x: 0, y: 0 };
+                            const loadingTask = pdfjsLib.getDocument(tempCurrentMapUrl);
+                            loadingTask.promise.then(pdf => {
+                                pdfDoc = pdf; pageNum = 1;
+                                localStorage.setItem('lastSelectedMap', tempCurrentMapUrl);
+                                renderPage(pageNum, true); 
+                                resolve(); 
+                            }).catch(error => {
+                                console.error('PDF Ladefehler in panToMarker für URL:', tempCurrentMapUrl, error);
+                                alert(`Karte für Marker konnte nicht geladen werden. Fehler: ${error.message}`);
+                                pdfDoc = null; currentMapUrl = ''; 
+                                reject(error);
+                            });
+                        });
+
+                        loadingPromise.then(() => {
+                            if (currentMapUrl === marker.mapUrl && pdfDoc) {
+                                panToMarkerLogic(marker);
+                            } else {
+                                console.warn("Kartenwechsel für Panning fehlgeschlagen oder Marker nicht auf aktueller Karte.");
+                            }
+                        }).catch(() => {
+                             console.error("Konnte Karte für Marker nicht laden.");
+                        });
+
+                    } else {
+                        alert(`Karte "${marker.mapUrl.split('/').pop().replace('.pdf','')}" ist nicht in der Auswahl verfügbar.`);
+                        setTimeout(() => showMarkerInfoPopup(marker, mapViewer.clientWidth / 2, mapViewer.clientHeight / 2), 100);
+                    }
+                } else { 
+                    setTimeout(() => showMarkerInfoPopup(marker, mapViewer.clientWidth / 2, mapViewer.clientHeight / 2), 100);
+                }
+            } else if (pdfDoc) { 
+                panToMarkerLogic(marker);
+            } else {
+                 alert("Bitte zuerst eine Karte laden, um zum Marker zu springen.");
+            }
+        }
+
+
+        function deleteMarker(id) {
+            if (confirm('Soll dieser Marker wirklich gelöscht werden?')) {
+                markers = markers.filter(m => m.id !== id);
+                if(pdfDoc) drawMarkers(); 
+                updateMarkerList();
+                saveData();
+                markerInfoPopup.style.display = 'none'; 
+            }
+        }
+
+        document.getElementById('markerForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            if (!pdfDoc || !currentMapUrl) { alert("Fehler: Keine Karte geladen oder Karten-URL nicht gesetzt. Marker kann nicht gespeichert werden."); return; }
+            
+            const coordsStr = document.getElementById('markerCoordsModal').value;
+            if (!coordsStr) { alert("Fehler: Keine Koordinaten für den Marker."); return; }
+            const [latStr, lngStr] = coordsStr.split(',').map(c => parseFloat(c.trim()));
+
+            const markerData = {
+                id: parseInt(document.getElementById('markerEditId').value) || Date.now(),
+                name: document.getElementById('markerNameModal').value.trim(),
+                lat: latStr, 
+                lng: lngStr,
+                canvasX: parseFloat(document.getElementById('markerCanvasXModal').value), 
+                canvasY: parseFloat(document.getElementById('markerCanvasYModal').value),
+                depth: document.getElementById('markerDepthModal').value.trim(),
+                notes: document.getElementById('markerNotesModal').value.trim(),
+                type: document.getElementById('markerTypeModal').value,
+                mapUrl: currentMapUrl, 
+                created: new Date().toISOString()
+            };
+
+            if (!markerData.name) { alert("Bitte geben Sie einen Namen für den Marker ein."); return; }
+
+            const existingIndex = markers.findIndex(m => m.id === markerData.id);
+            if (existingIndex > -1) {
+                markers[existingIndex] = markerData; 
+            } else {
+                markers.push(markerData); 
+            }
+            
+            drawMarkers(); 
+            updateMarkerList(); 
+            saveData();
+            closeModal('markerModal'); 
+            if (markerMode) toggleMarkerMode(); 
+        });
+
+        // --- GPS Funktionen ---
+        function updateGPSStatus(statusType, data = {}) {
+            const indicator = document.getElementById('gpsIndicator');
+            const statusTextEl = document.getElementById('gpsStatusText');
+            const gpsToggleBtn = document.getElementById('gpsToggleBtn');
+            if (!indicator || !statusTextEl || !gpsToggleBtn) return;
+
+            indicator.classList.remove('active', 'pending');
+            switch(statusType) {
+                case 'INACTIVE':
+                    statusTextEl.textContent = GPS_STATUS_TEXT.INACTIVE;
+                    gpsToggleBtn.textContent = '📡 GPS'; gpsToggleBtn.classList.remove('active');
+                    break;
+                case 'PENDING':
+                    statusTextEl.textContent = GPS_STATUS_TEXT.PENDING;
+                    indicator.classList.add('pending');
+                    gpsToggleBtn.textContent = '⏳ GPS...'; gpsToggleBtn.classList.add('active');
+                    break;
+                case 'ACTIVE':
+                    statusTextEl.textContent = GPS_STATUS_TEXT.ACTIVE(data.lat, data.lng, data.accuracy);
+                    indicator.classList.add('active');
+                    gpsToggleBtn.textContent = '🛰️ GPS Aktiv'; gpsToggleBtn.classList.add('active');
+                    break;
+                case 'ERROR':
+                    statusTextEl.textContent = GPS_STATUS_TEXT.ERROR(data.message);
+                    gpsToggleBtn.textContent = '⚠️ GPS Fehler'; gpsToggleBtn.classList.remove('active');
+                    break;
+            }
+        }
+        function toggleGPSTracking() { if (isGPSTrackingActive) stopGPSTracking(); else startGPSTracking(); }
+        function startGPSTracking() {
+            if (!("geolocation" in navigator)) { updateGPSStatus('ERROR', { message: "Geo API nicht im Browser." }); return; }
+            if (!window.isSecureContext && window.location.protocol !== "file:") {
+                updateGPSStatus('ERROR', { message: "Seite unsicher (kein HTTPS)." }); return;
+            }
+            updateGPSStatus('PENDING'); isGPSTrackingActive = true;
+            const options = { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 };
+            gpsWatchId = navigator.geolocation.watchPosition(
+                pos => {
+                    currentGPS = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy };
+                    updateGPSStatus('ACTIVE', currentGPS);
+                },
+                err => {
+                    let msg;
+                    if(err.code === err.PERMISSION_DENIED) msg = "Zugriff verweigert.";
+                    else if(err.code === err.POSITION_UNAVAILABLE) msg = "Position nicht verfügbar.";
+                    else if(err.code === err.TIMEOUT) msg = "Timeout bei Positionssuche.";
+                    else msg = "Unbekannter GPS Fehler.";
+                    console.error('GPS Fehler:', err.code, err.message);
+                    updateGPSStatus('ERROR', { message:msg }); currentGPS = null; 
+                    if (err.code === err.PERMISSION_DENIED) stopGPSTracking();
+                }, options);
+        }
+        function stopGPSTracking() {
+            if (gpsWatchId !== null) { navigator.geolocation.clearWatch(gpsWatchId); gpsWatchId = null; }
+            isGPSTrackingActive = false; currentGPS = null; updateGPSStatus('INACTIVE');
+            console.log("GPS Tracking gestoppt.");
+        }
+        function getCurrentGPSForCatchField() {
+            if (currentGPS) {
+                document.getElementById('catchGPS').value = `${currentGPS.lat.toFixed(6)}, ${currentGPS.lng.toFixed(6)}`;
+            } else {
+                alert('GPS ist nicht aktiv oder hat keine aktuelle Position. Bitte GPS aktivieren und auf Signal warten.');
+                if (!isGPSTrackingActive) startGPSTracking();
+            }
+        }
+
+        // --- Catch Log Funktionen (Überarbeitet) ---
+        document.getElementById('catchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const gpsCoordsStr = document.getElementById('catchGPS').value;
+            let gpsData = null;
+            if (gpsCoordsStr) {
+                const parts = gpsCoordsStr.split(',').map(s => parseFloat(s.trim()));
+                if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+                    gpsData = { lat: parts[0], lng: parts[1] };
+                }
+            }
+            
+            const catchEntry = {
+                id: Date.now(),
+                dateTime: document.getElementById('catchDateTime').value,
+                gps: gpsData,
+                fishType: document.getElementById('catchFishType').value, // Wert aus dem Dropdown
+                weight: document.getElementById('catchWeight').value,
+                length: document.getElementById('catchLength').value,
+                bait: document.getElementById('catchBait').value, // Wert aus dem Dropdown
+                released: document.getElementById('catchReleased').value, // Wert aus dem Dropdown
+                notes: document.getElementById('catchNotesModalForm').value.trim()
+            };
+
+            // Validierung (optional, aber gut für die UX)
+            if (!catchEntry.dateTime) { alert("Bitte Datum und Zeit des Fangs angeben."); return; }
+            if (!catchEntry.fishType) { alert("Bitte die Fischart auswählen."); return; }
+
+
+            catches.push(catchEntry);
+            
+            if (document.getElementById('catchMarkerCheck').checked && gpsData && currentMapUrl && pdfDoc) {
+                const marker = {
+                    id: Date.now() + 1, 
+                    name: `Fang: ${catchEntry.fishType || 'Unbekannt'} (${new Date(catchEntry.dateTime).toLocaleDateString('de-DE')})`,
+                    lat: gpsData.lat, lng: gpsData.lng,
+                    notes: `Gewicht: ${catchEntry.weight || '?'}kg, Länge: ${catchEntry.length || '?'}cm. Köder: ${catchEntry.bait || 'N/A'}. Fisch: ${catchEntry.fishType}. ${catchEntry.released === 'ja' ? 'Released.' : 'Entnommen.'}`,
+                    type: 'catch', depth: '', 
+                    mapUrl: currentMapUrl, 
+                    created: new Date().toISOString()
+                };
+                markers.push(marker);
+                drawMarkers(); 
+                updateMarkerList();
+            } else if (document.getElementById('catchMarkerCheck').checked && (!currentMapUrl || !pdfDoc)) {
+                alert("Fangeintrag gespeichert, aber kein Spot markiert, da keine Karte geladen ist.");
+            }
+            updateCatchList(); saveData(); closeModal('catchModal'); this.reset();
+        });
+
+        function showCatchModal() {
+            document.getElementById('catchForm').reset(); // Setzt alle Felder zurück, auch Dropdowns auf erste Option
+            document.getElementById('catchDateTime').value = new Date().toISOString().slice(0, 16);
+            document.getElementById('catchFishType').value = "Heilbutt"; // Standard-Vorauswahl
+            document.getElementById('catchBait').value = "Gummifisch (Shad)"; // Standard-Vorauswahl
+            document.getElementById('catchReleased').value = "nein"; // Standard-Vorauswahl
+
+            if (currentGPS) {
+                 document.getElementById('catchGPS').value = `${currentGPS.lat.toFixed(6)}, ${currentGPS.lng.toFixed(6)}`;
+            }
+            document.getElementById('catchModal').style.display = 'flex';
+        }
+
+        function updateCatchList() {
+            const el = document.getElementById('catchList');
+            if (!el) return;
+            if (catches.length === 0) { el.innerHTML = 'Keine Fänge eingetragen.'; return; }
+            
+            el.innerHTML = catches.sort((a,b) => new Date(b.dateTime) - new Date(a.dateTime))
+                .map(c => `
+                <div class="catch-entry">
+                    <div class="catch-header">
+                        <span class="catch-date">${new Date(c.dateTime).toLocaleString('de-DE', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</span>
+                        <button class="control-btn" onclick="deleteCatch(${c.id})" style="background:#cc3333;color:white;padding:4px 8px;min-width:auto;font-size:0.8em;">❌</button>
+                    </div>
+                    <div class="catch-details">
+                        <p><strong>Fisch:</strong> ${c.fishType || 'Nicht spezifiziert'}</p>
+                        ${c.weight ? `<p><strong>Gewicht:</strong> ${c.weight} kg</p>` : ''}
+                        ${c.length ? `<p><strong>Länge:</strong> ${c.length} cm</p>` : ''}
+                        ${c.bait ? `<p><strong>Köder:</strong> ${c.bait}</p>` : ''}
+                        <p><strong>Status:</strong> ${c.released === 'ja' ? 'Ausgesetzt (C&R)' : 'Entnommen'}</p>
+                        ${c.gps ? `<p><small>📍 ${c.gps.lat.toFixed(5)}, ${c.gps.lng.toFixed(5)}</small></p>` : ''}
+                        ${c.notes ? `<p><small>📝 ${c.notes}</small></p>` : ''}
+                    </div>
+                </div>`).join('');
+        }
+        function deleteCatch(id) {
+            if (confirm('Soll dieser Fangeintrag wirklich gelöscht werden?')) {
+                catches = catches.filter(c => c.id !== id);
+                updateCatchList(); saveData();
+            }
+        }
+
+        // --- Planner Funktionen ---
+        function initializePlanner() {
+            const plannerDaysEl = document.getElementById('plannerDays');
+            if (!plannerDaysEl) return;
+            const daysHtml = []; const startDate = new Date(2025, 6, 1);
+            for (let i = 0; i < 8; i++) {
+                const currentDate = new Date(startDate); currentDate.setDate(startDate.getDate() + i);
+                const dayKey = `day${currentDate.toISOString().split('T')[0]}`;
+                if (!plannerData[dayKey]) plannerData[dayKey] = { milestones: [] };
+                daysHtml.push(`
+                    <div class="day-plan">
+                        <h3 class="day-header">Tag ${i+1} - ${currentDate.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' })}</h3>
+                        <div id="milestones-${dayKey}">
+                            ${plannerData[dayKey].milestones.map((m, idx) => `
+                                <div class="milestone">
+                                    <div><strong>${m.time || '??:??'}</strong> - ${m.location || 'Unbekannt'}<br><small>${m.notes || ''}</small></div>
+                                    <button class="control-btn" onclick="deleteMilestone('${dayKey}', ${idx})" style="background:#cc3333;color:white;padding:4px 8px;min-width:auto;font-size:0.8em;">❌</button>
+                                </div>`).join('') || '<p style="font-size:0.9em; opacity:0.7;">Keine Meilensteine für diesen Tag.</p>'}
+                        </div>
+                        <button class="control-btn" onclick="addMilestone('${dayKey}')" style="margin-top:10px; font-size:0.9em;">➕ Meilenstein</button>
+                    </div>`);
+            }
+            plannerDaysEl.innerHTML = daysHtml.join('');
+        }
+        function addMilestone(dayKey) {
+            const time = prompt('Uhrzeit (z.B. 08:00):', '10:00'); if (time === null) return;
+            const location = prompt('Position/Ort:', 'Kante Nord-West'); if (location === null) return;
+            const notes = prompt('Notizen:', 'Heilbutt angeln'); if (notes === null) return;
+            plannerData[dayKey].milestones.push({ time, location, notes });
+            saveData(); initializePlanner();
+        }
+        function deleteMilestone(dayKey, index) {
+            if (confirm('Soll dieser Meilenstein wirklich gelöscht werden?')) {
+                plannerData[dayKey].milestones.splice(index, 1);
+                saveData(); initializePlanner();
+            }
+        }
+
+        // --- Checklist Funktionen ---
+        const DEFAULT_CHECKLISTS_STRUCTURE = {
+            'Grundausstattung': ['Angelrute (30-50 lbs)', 'Multirolle + Schnur', 'Pilker (200-500g)', 'Gummifische (20-30cm)', 'Vorfächer (1-1.5mm)', 'Wirbel/Karabiner', 'Kescher/Gaff', 'Fischtöter', 'Maßband', 'Zange'],
+            'Sicherheit': ['Schwimmweste/Floating Anzug', 'Erste-Hilfe-Set', 'Signalpfeife', 'Taschenlampe', 'Handy (wasserdicht)', 'GPS-Gerät/App', 'Messer', 'Wetterbericht checken!'],
+            'Kleidung': ['Regenkleidung', 'Warme Unterwäsche', 'Mütze & Handschuhe', 'Sonnenschutz (Brille, Creme)', 'Stiefel/Schuhe (rutschfest)'],
+            'Verpflegung': ['Wasser (ausreichend!)', 'Energieriegel/Snacks', 'Brote/Mahlzeit', 'Thermosflasche (Heißgetränk)', 'Seekrankheitstabletten (optional)']
+        };
+        function initializeDefaultChecklists() {
+             Object.keys(DEFAULT_CHECKLISTS_STRUCTURE).forEach(title => {
+                if (!checklists[title] || checklists[title].length === 0) {
+                    checklists[title] = DEFAULT_CHECKLISTS_STRUCTURE[title].map(itemText => ({ text: itemText, checked: false }));
+                }
+            });
+        }
+        function initializeChecklists() {
+            const el = document.getElementById('checklistsContent');
+            if (!el) return;
+            if (Object.keys(checklists).length === 0) initializeDefaultChecklists();
+            el.innerHTML = Object.entries(checklists).map(([title, items]) => `
+                <div class="checklist">
+                    <h3 class="checklist-title">${title}</h3>
+                    ${items.map((item, idx) => `
+                        <div class="checklist-item">
+                            <input type="checkbox" id="check-${title.replace(/\s+/g, '-')}-${idx}" 
+                                   data-checklist-title="${title}" data-item-index="${idx}"
+                                   ${item.checked ? 'checked' : ''} 
+                                   onchange="handleChecklistItemChange(this)">
+                            <label for="check-${title.replace(/\s+/g, '-')}-${idx}">${item.text}</label>
+                        </div>`).join('')}
+                </div>`).join('') || '<p>Keine Checklisten definiert.</p>';
+        }
+        function handleChecklistItemChange(checkbox) {
+            const title = checkbox.dataset.checklistTitle;
+            const index = parseInt(checkbox.dataset.itemIndex);
+            if (checklists[title] && checklists[title][index]) {
+                checklists[title][index].checked = checkbox.checked;
+                saveData();
+            }
+        }
+
+        // --- Modal Funktionen ---
+        function closeModal(modalId) { 
+            const modal = document.getElementById(modalId);
+            if (modal) modal.style.display = 'none';
+        }
+
+        // --- Fullscreen API ---
+        function toggleFullScreen() {
+            const isInFullScreen = document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement;
+            if (!isInFullScreen) {
+                document.body.classList.add('fullscreen-active');
+                if (mapViewer.requestFullscreen) mapViewer.requestFullscreen();
+                else if (mapViewer.mozRequestFullScreen) mapViewer.mozRequestFullScreen(); 
+                else if (mapViewer.webkitRequestFullscreen) mapViewer.webkitRequestFullscreen({navigationUI: 'hide'});
+                else if (mapViewer.msRequestFullscreen) mapViewer.msRequestFullscreen();
+                if (fullscreenBtn) fullscreenBtn.textContent = '🖼️ Verlassen';
+            } else {
+                document.body.classList.remove('fullscreen-active');
+                if (document.exitFullscreen) document.exitFullscreen();
+                else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+                else if (document.msExitFullscreen) document.msExitFullscreen();
+                 if (fullscreenBtn) fullscreenBtn.textContent = '🖼️ Vollbild';
+            }
+        }
+        function handleFullscreenChange() {
+            const isInFullScreen = !!(document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+            if (isInFullScreen) {
+                document.body.classList.add('fullscreen-active');
+                if (fullscreenBtn) fullscreenBtn.textContent = '🖼️ Verlassen';
+            } else {
+                document.body.classList.remove('fullscreen-active');
+                if (fullscreenBtn) fullscreenBtn.textContent = '🖼️ Vollbild';
+            }
+            setTimeout(() => {
+                if (pdfDoc) renderPage(pageNum, true); 
+            }, 250); 
+        }
+        ['fullscreenchange', 'webkitfullscreenchange', 'mozfullscreenchange', 'MSFullscreenChange'].forEach(
+            event => document.addEventListener(event, handleFullscreenChange)
+        );
+
+        // --- Import/Export ---
+        function exportData() {
+            const dataToExport = { markers, catches, plannerData, checklists, version: STORAGE_KEY.split('_v')[1], exportDate: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `heilbutt-fangplaner-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+            alert('Daten wurden als JSON-Datei exportiert.');
+        }
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (confirm("Möchten Sie die aktuellen Daten wirklich mit den importierten Daten überschreiben? Dieser Vorgang kann nicht rückgängig gemacht werden.")) {
+                        markers = imported.markers || [];
+                        markers.forEach(m => { 
+                            if (m.type === undefined) m.type = m.markerType || 'spot'; 
+                            delete m.markerType;
+                            if (m.mapUrl === undefined) m.mapUrl = ''; 
+                        });
+                        catches = imported.catches || [];
+                        plannerData = imported.plannerData || {};
+                        checklists = imported.checklists || {};
+                        saveData(); 
+                        loadData(); 
+                        const lastMap = localStorage.getItem('lastSelectedMap');
+                        if (lastMap && document.getElementById('mapSelect').value === lastMap) {
+                            loadPDF(lastMap); 
+                        } else if (document.getElementById('mapSelect').value) {
+                            loadPDF(document.getElementById('mapSelect').value);
+                        }
+                        alert('Daten erfolgreich importiert und angewendet!');
+                    }
+                } catch (error) { console.error('Import Fehler:', error); alert('Fehler beim Import: ' + error.message); }
+                finally { if(event.target) event.target.value = ''; }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- Initialize App ---
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData(); 
+            updateGPSStatus('INACTIVE'); 
+            const lastMap = localStorage.getItem('lastSelectedMap');
+            const mapSelect = document.getElementById('mapSelect');
+            if (lastMap) {
+               if (mapSelect && Array.from(mapSelect.options).some(opt => opt.value === lastMap)) {
+                    mapSelect.value = lastMap;
+                    loadPDF(lastMap); 
+               } else if (mapSelect && mapSelect.options.length > 1) {
+                   mapSelect.value = mapSelect.options[1].value; 
+                   loadPDF(mapSelect.options[1].value);
+               }
+            } else if (mapSelect && mapSelect.options.length > 1) {
+                const firstMapOption = mapSelect.options[1].value;
+                mapSelect.value = firstMapOption;
+                loadPDF(firstMapOption);
+            }
+            
+            if (typeof initializePlanner !== 'function') console.warn("initializePlanner nicht gefunden"); else initializePlanner();
+            if (typeof initializeChecklists !== 'function') console.warn("initializeChecklists nicht gefunden"); else initializeChecklists();
+            if (typeof updateCatchList !== 'function') console.warn("updateCatchList nicht gefunden"); else updateCatchList();
+        });
+        window.onclick = function(event) { 
+            if (event.target.classList.contains('modal')) { 
+                closeModal(event.target.id); 
+            }
+        };
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                const isInFullScreen = !!(document.fullscreenElement || document.mozFullScreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+                if (pdfDoc && !isInFullScreen) {
+                    // console.log("Fenstergröße geändert, passe Karte an.");
+                    renderPage(pageNum, true);
+                }
+            }, 250);
+        });
+
+    </script>
+</body>
+</html>
