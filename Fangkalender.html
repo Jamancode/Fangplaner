@@ -1,0 +1,2143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fangkalender</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* CSS Variables & Modern Design System */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --water-gradient: linear-gradient(180deg, rgba(30,60,114,0.1) 0%, rgba(42,82,152,0.05) 100%);
+            --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            --danger-gradient: linear-gradient(135deg, #f85032 0%, #e73827 100%);
+            --neutral-gradient: linear-gradient(135deg, #ada996 0%, #f2f2f2 50%, #dbdbdb 100%);
+
+            --text-primary: #2c3e50;
+            --text-secondary: #7f8c8d;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            --bg-tertiary: #e9ecef;
+
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+
+            --radius-sm: 4px;
+            --radius-md: 8px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+
+            --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Dark Mode Variables */
+        [data-theme="dark"] {
+            --text-primary: #ecf0f1;
+            --text-secondary: #bdc3c7;
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --water-gradient: linear-gradient(180deg, rgba(15,52,96,0.3) 0%, rgba(22,33,62,0.2) 100%);
+        }
+
+        /* Reset & Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color var(--transition-normal), color var(--transition-normal);
+            overflow-x: hidden;
+        }
+
+        /* Water Animation Background */
+        .water-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--water-gradient);
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .water-bg::before,
+        .water-bg::after {
+            content: '';
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: waterFlow 20s linear infinite;
+        }
+
+        .water-bg::after {
+            background-size: 30px 30px;
+            animation-duration: 15s;
+            animation-direction: reverse;
+        }
+
+        @keyframes waterFlow {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        /* Header Styles */
+        header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #e0e0e0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Weather Widget */
+        .weather-widget {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: rgba(255,255,255,0.1);
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-xl);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all var(--transition-normal);
+        }
+
+        .weather-widget:hover {
+            background: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+        }
+
+        .weather-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .weather-item i {
+            font-size: 1.2rem;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            transition: all var(--transition-normal);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform var(--transition-normal);
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Bite Probability Display */
+        .probability-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .fish-probability {
+            background: var(--bg-tertiary);
+            padding: 1rem;
+            border-radius: var(--radius-md);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .fish-probability:hover {
+            transform: translateX(4px);
+            background: var(--bg-primary);
+        }
+
+        .fish-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .fish-icon {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            transition: all var(--transition-normal);
+        }
+
+        .probability-high .fish-icon {
+            background: var(--success-gradient);
+            color: white;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .probability-medium .fish-icon {
+            background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+            color: white;
+        }
+
+        .probability-low .fish-icon {
+            background: var(--danger-gradient);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .probability-bar {
+            width: 120px;
+            height: 8px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .probability-fill {
+            height: 100%;
+            border-radius: var(--radius-sm);
+            transition: width var(--transition-slow);
+            background: var(--success-gradient);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .probability-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: shimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Calendar Styles */
+        .calendar-container {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-lg);
+            margin-top: 2rem;
+        }
+
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .calendar-nav {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width var(--transition-normal), height var(--transition-normal);
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn-icon {
+            background: transparent;
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border: 2px solid var(--bg-tertiary);
+        }
+
+        .btn-icon:hover {
+            background: var(--bg-tertiary);
+        }
+
+        /* Calendar Grid */
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 0.5rem;
+        }
+
+        .calendar-day-header {
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-secondary);
+            padding: 0.5rem;
+        }
+
+        .calendar-day {
+            aspect-ratio: 1;
+            background: var(--bg-primary);
+            border-radius: var(--radius-md);
+            padding: 0.5rem;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            overflow: hidden;
+        }
+
+        .calendar-day:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            background: var(--bg-tertiary);
+        }
+
+        .calendar-day.has-catch::after {
+            content: '🐟';
+            position: absolute;
+            bottom: 2px;
+            right: 2px;
+            font-size: 0.8rem;
+        }
+
+        .calendar-day.today {
+            background: var(--primary-gradient);
+            color: white;
+            font-weight: 600;
+        }
+
+        .day-number {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .day-weather {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            z-index: 2000;
+            animation: fadeIn var(--transition-normal);
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: var(--bg-primary);
+            border-radius: var(--radius-xl);
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 2rem;
+            position: relative;
+            animation: slideUp var(--transition-normal);
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--bg-tertiary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all var(--transition-fast);
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            transform: rotate(90deg);
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 2px solid var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            transition: all var(--transition-fast);
+            font-size: 1rem;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+            background: var(--bg-primary);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        select.form-control {
+            cursor: pointer;
+        }
+
+        textarea.form-control {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        /* Photo Upload Area */
+        .photo-upload {
+            border: 2px dashed var(--bg-tertiary);
+            border-radius: var(--radius-md);
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .photo-upload:hover {
+            border-color: #3498db;
+            background: var(--bg-secondary);
+        }
+
+        .photo-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .photo-preview {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .photo-preview img {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-tertiary);
+            padding: 1.5rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+            transition: all var(--transition-fast);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: var(--primary-gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Catch List */
+        .catch-list {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .catch-item {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-md);
+            padding: 1.5rem;
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            transition: all var(--transition-fast);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .catch-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .catch-photo {
+            width: 80px;
+            height: 80px;
+            border-radius: var(--radius-md);
+            object-fit: cover;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .catch-details {
+            flex: 1;
+        }
+
+        .catch-species {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .catch-info {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .catch-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid var(--bg-tertiary);
+            border-radius: 50%;
+            border-top-color: #3498db;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: var(--primary-gradient);
+            color: white;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: all var(--transition-fast);
+            z-index: 1000;
+        }
+
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .weather-widget {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .calendar-grid {
+                gap: 0.25rem;
+            }
+
+            .calendar-day {
+                font-size: 0.8rem;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+        }
+
+        /* Moon Phase Display */
+        .moon-phase {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            background: #f5f5f5;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+        }
+
+        .moon-phase::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #333;
+            transition: transform var(--transition-slow);
+        }
+
+        /* Solunar Times */
+        .solunar-times {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .solunar-period {
+            background: var(--bg-tertiary);
+            padding: 0.75rem;
+            border-radius: var(--radius-md);
+            text-align: center;
+        }
+
+        .solunar-period.major {
+            border: 2px solid #3498db;
+        }
+
+        .solunar-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            display: block;
+        }
+
+        .solunar-time {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+
+            body {
+                background: white;
+                color: black;
+            }
+
+            .card, .calendar-container {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Water Animation Background -->
+    <div class="water-bg"></div>
+
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <h1><i class="fas fa-fish"></i> Dein Fangkalender </h1>
+            <div class="weather-widget" id="weatherWidget">
+                <div class="weather-item">
+                    <i class="fas fa-temperature-high"></i>
+                    <span id="temperature">--°C</span>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-compress-arrows-alt"></i>
+                    <span id="pressure">-- hPa</span>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-wind"></i>
+                    <span id="wind">-- km/h</span>
+                </div>
+                <div class="weather-item">
+                    <i class="fas fa-moon"></i>
+                    <span id="moonPhase">--</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Bite Probability Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Bisswahrscheinlichkeit Heute</h2>
+                    <button class="btn btn-icon" onclick="refreshProbabilities()">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="probability-grid" id="probabilityGrid">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Solunar Times Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Solunar Zeiten</h2>
+                    <div class="moon-phase" id="moonPhaseVisual"></div>
+                </div>
+                <div class="solunar-times" id="solunarTimes">
+                    <!-- Dynamically populated -->
+                </div>
+            </div>
+
+            <!-- Quick Stats Card -->
+            <div class="card">
+                <div class="card-header">
+                    <h2 class="card-title">Fangstatistik</h2>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="totalCatches">0</div>
+                        <div class="stat-label">Gesamt Fänge</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="thisMonth">0</div>
+                        <div class="stat-label">Diesen Monat</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="bestFish">-</div>
+                        <div class="stat-label">Häufigste Art</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Calendar Container -->
+        <div class="calendar-container">
+            <div class="calendar-header">
+                <h2 id="currentMonthYear">Januar 2024</h2>
+                <div class="calendar-nav">
+                    <button class="btn btn-icon" onclick="previousMonth()">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <button class="btn" onclick="goToToday()">Heute</button>
+                    <button class="btn btn-icon" onclick="nextMonth()">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="calendar-grid" id="calendarGrid">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Recent Catches -->
+        <div class="card" style="margin-top: 2rem;">
+            <div class="card-header">
+                <h2 class="card-title">Aktuelle Fänge</h2>
+                <button class="btn" onclick="openCatchModal()">
+                    <i class="fas fa-plus"></i> Neuer Fang
+                </button>
+            </div>
+            <div class="catch-list" id="catchList">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Catch Entry Modal -->
+    <div class="modal" id="catchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Fang dokumentieren</h2>
+                <button class="close-btn" onclick="closeCatchModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="catchForm">
+                <div class="form-group">
+                    <label class="form-label" for="catchDate">Datum & Zeit</label>
+                    <input type="datetime-local" class="form-control" id="catchDate" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fishSpecies">Fischart</label>
+                    <select class="form-control" id="fishSpecies" required>
+                        <option value="">Bitte wählen...</option>
+                        <option value="pike">Hecht</option>
+                        <option value="zander">Zander</option>
+                        <option value="perch">Barsch</option>
+                        <option value="eel">Aal</option>
+                        <option value="carp">Karpfen</option>
+                        <option value="trout">Forelle</option>
+                        <option value="tench">Schleie</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fishSize">Größe (cm)</label>
+                    <input type="number" class="form-control" id="fishSize" min="1" step="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="fishWeight">Gewicht (g)</label>
+                    <input type="number" class="form-control" id="fishWeight" min="1" step="10">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="bait">Köder</label>
+                    <input type="text" class="form-control" id="bait" placeholder="z.B. Wobbler, Gummifisch, Wurm...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="method">Angelmethode</label>
+                    <select class="form-control" id="method">
+                        <option value="">Bitte wählen...</option>
+                        <option value="spinning">Spinnfischen</option>
+                        <option value="bottom">Grundangeln</option>
+                        <option value="float">Posenfischen</option>
+                        <option value="fly">Fliegenfischen</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="location">Gewässer & Stelle</label>
+                    <input type="text" class="form-control" id="location" placeholder="z.B. Bleilochtalsperre, Nordbucht">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Foto</label>
+                    <div class="photo-upload">
+                        <input type="file" id="catchPhoto" accept="image/*" onchange="previewPhoto(event)">
+                        <i class="fas fa-camera" style="font-size: 2rem; color: var(--text-secondary);"></i>
+                        <p style="color: var(--text-secondary); margin-top: 0.5rem;">Klicken oder Foto hierher ziehen</p>
+                        <div class="photo-preview" id="photoPreview">
+                            <img id="previewImage" alt="Vorschau">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="notes">Notizen</label>
+                    <textarea class="form-control" id="notes" rows="4" placeholder="Besondere Umstände, Story zum Fang..."></textarea>
+                </div>
+
+                <div style="display: flex; gap: 1rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-icon" onclick="closeCatchModal()">Abbrechen</button>
+                    <button type="submit" class="btn">
+                        <i class="fas fa-save"></i> Speichern
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Day Details Modal -->
+    <div class="modal" id="dayModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="dayModalTitle">Tag Details</h2>
+                <button class="close-btn" onclick="closeDayModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div id="dayModalContent">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle no-print" onclick="toggleTheme()">
+        <i class="fas fa-moon" id="themeIcon"></i>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Fish Database with Scientific Data
+        const fishDatabase = {
+            pike: {
+                name: 'Hecht',
+                scientificName: 'Esox lucius',
+                icon: '🦈',
+                optimalTemp: { min: 8, max: 15 },
+                activeTemp: { min: 4, max: 20 },
+                optimalPressure: 'falling',
+                bestTimes: ['dawn', 'dusk'],
+                bestMonths: [9, 10, 11, 3, 4, 5],
+                moonPreference: 'full',
+                weatherPreference: 'cloudy',
+                behaviors: {
+                    spring: { activity: 0.8, depth: 'shallow', pattern: 'aggressive' },
+                    summer: { activity: 0.5, depth: 'deep', pattern: 'ambush' },
+                    autumn: { activity: 0.9, depth: 'medium', pattern: 'hunting' },
+                    winter: { activity: 0.3, depth: 'deep', pattern: 'lethargic' }
+                }
+            },
+            zander: {
+                name: 'Zander',
+                scientificName: 'Sander lucioperca',
+                icon: '🐟',
+                optimalTemp: { min: 12, max: 20 },
+                activeTemp: { min: 8, max: 24 },
+                optimalPressure: 'falling',
+                bestTimes: ['dusk', 'night'],
+                bestMonths: [5, 6, 9, 10],
+                moonPreference: 'new',
+                weatherPreference: 'cloudy',
+                behaviors: {
+                    spring: { activity: 0.7, depth: 'medium', pattern: 'cruising' },
+                    summer: { activity: 0.6, depth: 'deep', pattern: 'nocturnal' },
+                    autumn: { activity: 0.8, depth: 'deep', pattern: 'schooling' },
+                    winter: { activity: 0.4, depth: 'very_deep', pattern: 'sluggish' }
+                }
+            },
+            perch: {
+                name: 'Barsch',
+                scientificName: 'Perca fluviatilis',
+                icon: '🐠',
+                optimalTemp: { min: 15, max: 22 },
+                activeTemp: { min: 6, max: 25 },
+                optimalPressure: 'stable',
+                bestTimes: ['morning', 'afternoon', 'dusk'],
+                bestMonths: [5, 6, 7, 8, 9],
+                moonPreference: 'any',
+                weatherPreference: 'varied',
+                behaviors: {
+                    spring: { activity: 0.7, depth: 'shallow', pattern: 'schooling' },
+                    summer: { activity: 0.8, depth: 'varied', pattern: 'hunting_schools' },
+                    autumn: { activity: 0.9, depth: 'medium', pattern: 'aggressive' },
+                    winter: { activity: 0.5, depth: 'deep', pattern: 'slow' }
+                }
+            },
+            eel: {
+                name: 'Aal',
+                scientificName: 'Anguilla anguilla',
+                icon: '🐍',
+                optimalTemp: { min: 18, max: 25 },
+                activeTemp: { min: 10, max: 28 },
+                optimalPressure: 'falling',
+                bestTimes: ['night', 'dusk'],
+                bestMonths: [6, 7, 8, 9],
+                moonPreference: 'new',
+                weatherPreference: 'warm_rain',
+                behaviors: {
+                    spring: { activity: 0.5, depth: 'bottom', pattern: 'emerging' },
+                    summer: { activity: 0.9, depth: 'bottom', pattern: 'nocturnal_feeding' },
+                    autumn: { activity: 0.7, depth: 'bottom', pattern: 'preparing' },
+                    winter: { activity: 0.1, depth: 'buried', pattern: 'dormant' }
+                }
+            },
+            carp: {
+                name: 'Karpfen',
+                scientificName: 'Cyprinus carpio',
+                icon: '🐡',
+                optimalTemp: { min: 20, max: 28 },
+                activeTemp: { min: 10, max: 30 },
+                optimalPressure: 'stable',
+                bestTimes: ['dawn', 'dusk', 'night'],
+                bestMonths: [5, 6, 7, 8, 9],
+                moonPreference: 'full',
+                weatherPreference: 'warm_stable',
+                behaviors: {
+                    spring: { activity: 0.6, depth: 'shallow', pattern: 'warming' },
+                    summer: { activity: 0.9, depth: 'varied', pattern: 'active_feeding' },
+                    autumn: { activity: 0.8, depth: 'medium', pattern: 'bulking' },
+                    winter: { activity: 0.2, depth: 'deep', pattern: 'dormant' }
+                }
+            },
+            trout: {
+                name: 'Forelle',
+                scientificName: 'Salmo trutta',
+                icon: '🎣',
+                optimalTemp: { min: 8, max: 16 },
+                activeTemp: { min: 4, max: 20 },
+                optimalPressure: 'falling',
+                bestTimes: ['morning', 'evening'],
+                bestMonths: [3, 4, 5, 9, 10],
+                moonPreference: 'any',
+                weatherPreference: 'overcast',
+                behaviors: {
+                    spring: { activity: 0.9, depth: 'shallow', pattern: 'insect_feeding' },
+                    summer: { activity: 0.5, depth: 'deep_cool', pattern: 'selective' },
+                    autumn: { activity: 0.8, depth: 'medium', pattern: 'aggressive' },
+                    winter: { activity: 0.4, depth: 'deep', pattern: 'slow' }
+                }
+            },
+            tench: {
+                name: 'Schleie',
+                scientificName: 'Tinca tinca',
+                icon: '🐢',
+                optimalTemp: { min: 18, max: 24 },
+                activeTemp: { min: 12, max: 26 },
+                optimalPressure: 'stable',
+                bestTimes: ['dawn', 'dusk'],
+                bestMonths: [5, 6, 7, 8],
+                moonPreference: 'any',
+                weatherPreference: 'warm_calm',
+                behaviors: {
+                    spring: { activity: 0.5, depth: 'shallow', pattern: 'emerging' },
+                    summer: { activity: 0.8, depth: 'weedy', pattern: 'feeding' },
+                    autumn: { activity: 0.4, depth: 'medium', pattern: 'slowing' },
+                    winter: { activity: 0.1, depth: 'mud', pattern: 'hibernating' }
+                }
+            }
+        };
+
+        // State Management
+        const appState = {
+            currentDate: new Date(),
+            currentMonth: new Date().getMonth(),
+            currentYear: new Date().getFullYear(),
+            weatherData: null,
+            moonData: null,
+            catches: [],
+            theme: 'light'
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', function() {
+            loadStoredData();
+            initializeCalendar();
+            updateWeatherData();
+            updateMoonData();
+            calculateProbabilities();
+            updateStats();
+            renderRecentCatches();
+
+            // Set current datetime in catch form
+            const now = new Date();
+            document.getElementById('catchDate').value = now.toISOString().slice(0, 16);
+
+            // Form submission
+            document.getElementById('catchForm').addEventListener('submit', saveCatch);
+
+            // Update data every 30 minutes
+            setInterval(() => {
+                updateWeatherData();
+                updateMoonData();
+                calculateProbabilities();
+            }, 30 * 60 * 1000);
+        });
+
+        // Load stored data from localStorage
+        function loadStoredData() {
+            const storedCatches = localStorage.getItem('fishingCatches');
+            if (storedCatches) {
+                appState.catches = JSON.parse(storedCatches);
+            }
+
+            const storedTheme = localStorage.getItem('theme');
+            if (storedTheme) {
+                appState.theme = storedTheme;
+                document.body.setAttribute('data-theme', storedTheme);
+                updateThemeIcon();
+            }
+        }
+
+        // Weather API Integration (OpenWeatherMap)
+        async function updateWeatherData() {
+            // For demo purposes, using simulated data
+            // In production, replace with actual API call
+            const simulatedWeather = {
+                temp: 15 + Math.random() * 10,
+                pressure: 1000 + Math.random() * 30,
+                windSpeed: Math.random() * 20,
+                clouds: Math.random() * 100,
+                humidity: 60 + Math.random() * 30
+            };
+
+            appState.weatherData = simulatedWeather;
+
+            // Update UI
+            document.getElementById('temperature').textContent = `${Math.round(simulatedWeather.temp)}°C`;
+            document.getElementById('pressure').textContent = `${Math.round(simulatedWeather.pressure)} hPa`;
+            document.getElementById('wind').textContent = `${Math.round(simulatedWeather.windSpeed)} km/h`;
+        }
+
+        // Moon Phase Calculation
+        function updateMoonData() {
+            const date = new Date();
+            const moonPhase = calculateMoonPhase(date);
+            const solunarTimes = calculateSolunarTimes(date);
+
+            appState.moonData = {
+                phase: moonPhase,
+                solunarTimes: solunarTimes
+            };
+
+            // Update UI
+            document.getElementById('moonPhase').textContent = getMoonPhaseName(moonPhase.phase);
+            updateMoonVisual(moonPhase.illumination);
+            renderSolunarTimes(solunarTimes);
+        }
+
+        // Calculate moon phase (simplified algorithm)
+        function calculateMoonPhase(date) {
+            const knownNewMoon = new Date('2000-01-06');
+            const lunarCycle = 29.53058867; // days
+            const daysSinceNew = (date - knownNewMoon) / (1000 * 60 * 60 * 24);
+            const moonCycles = daysSinceNew / lunarCycle;
+            const phase = (moonCycles - Math.floor(moonCycles)) * 100;
+
+            return {
+                phase: phase,
+                illumination: Math.abs(Math.sin(phase * Math.PI / 50))
+            };
+        }
+
+        function getMoonPhaseName(phase) {
+            if (phase < 6.25) return 'Neumond';
+            if (phase < 18.75) return 'Zunehmender Mond';
+            if (phase < 31.25) return 'Halbmond';
+            if (phase < 43.75) return 'Zunehmender Mond';
+            if (phase < 56.25) return 'Vollmond';
+            if (phase < 68.75) return 'Abnehmender Mond';
+            if (phase < 81.25) return 'Halbmond';
+            if (phase < 93.75) return 'Abnehmender Mond';
+            return 'Neumond';
+        }
+
+        function updateMoonVisual(illumination) {
+            const moonEl = document.getElementById('moonPhaseVisual');
+            const coverage = (1 - illumination) * 100;
+            moonEl.style.setProperty('--moon-coverage', `${coverage}%`);
+        }
+
+        // Calculate Solunar Times (simplified)
+        function calculateSolunarTimes(date) {
+            // This is a simplified calculation
+            // In production, use proper astronomical calculations
+            const baseTime = date.getHours() * 60 + date.getMinutes();
+
+            return {
+                majorTimes: [
+                    { start: '06:30', end: '08:30', strength: 'major' },
+                    { start: '18:45', end: '20:45', strength: 'major' }
+                ],
+                minorTimes: [
+                    { start: '00:15', end: '01:15', strength: 'minor' },
+                    { start: '12:30', end: '13:30', strength: 'minor' }
+                ]
+            };
+        }
+
+        function renderSolunarTimes(times) {
+            const container = document.getElementById('solunarTimes');
+            container.innerHTML = '';
+
+            [...times.majorTimes, ...times.minorTimes].forEach(period => {
+                const div = document.createElement('div');
+                div.className = `solunar-period ${period.strength}`;
+                div.innerHTML = `
+                    <span class="solunar-label">${period.strength === 'major' ? 'Hauptzeit' : 'Nebenzeit'}</span>
+                    <span class="solunar-time">${period.start} - ${period.end}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Bite Probability Calculation Engine
+        function calculateProbabilities() {
+            const probabilities = {};
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const hour = now.getHours();
+            const season = getSeason(month);
+
+            for (const [key, fish] of Object.entries(fishDatabase)) {
+                let score = 0;
+                let factors = [];
+
+                // Temperature factor (most important)
+                if (appState.weatherData) {
+                    const temp = appState.weatherData.temp;
+                    if (temp >= fish.optimalTemp.min && temp <= fish.optimalTemp.max) {
+                        score += 30;
+                        factors.push({ name: 'Temperatur', value: 'Optimal', score: 30 });
+                    } else if (temp >= fish.activeTemp.min && temp <= fish.activeTemp.max) {
+                        score += 15;
+                        factors.push({ name: 'Temperatur', value: 'Akzeptabel', score: 15 });
+                    } else {
+                        score -= 20;
+                        factors.push({ name: 'Temperatur', value: 'Ungünstig', score: -20 });
+                    }
+
+                    // Pressure trend
+                    const pressure = appState.weatherData.pressure;
+                    if (fish.optimalPressure === 'falling' && pressure < 1010) {
+                        score += 15;
+                        factors.push({ name: 'Luftdruck', value: 'Fallend', score: 15 });
+                    } else if (fish.optimalPressure === 'stable' && pressure > 1010 && pressure < 1020) {
+                        score += 10;
+                        factors.push({ name: 'Luftdruck', value: 'Stabil', score: 10 });
+                    }
+                }
+
+                // Time of day
+                const timeOfDay = getTimeOfDay(hour);
+                if (fish.bestTimes.includes(timeOfDay)) {
+                    score += 20;
+                    factors.push({ name: 'Tageszeit', value: 'Optimal', score: 20 });
+                }
+
+                // Season and month
+                if (fish.bestMonths.includes(month)) {
+                    score += 15;
+                    factors.push({ name: 'Jahreszeit', value: 'Hauptsaison', score: 15 });
+                }
+
+                // Behavioral patterns
+                const behavior = fish.behaviors[season];
+                score += behavior.activity * 20;
+                factors.push({ name: 'Aktivität', value: `${Math.round(behavior.activity * 100)}%`, score: Math.round(behavior.activity * 20) });
+
+                // Moon phase
+                if (appState.moonData) {
+                    const moonMatch = checkMoonPreference(fish.moonPreference, appState.moonData.phase.phase);
+                    if (moonMatch) {
+                        score += 10;
+                        factors.push({ name: 'Mondphase', value: 'Günstig', score: 10 });
+                    }
+                }
+
+                // Normalize score to 0-100
+                score = Math.max(0, Math.min(100, score));
+
+                probabilities[key] = {
+                    score: score,
+                    factors: factors,
+                    recommendation: getRecommendation(score)
+                };
+            }
+
+            renderProbabilities(probabilities);
+        }
+
+        function getSeason(month) {
+            if (month >= 3 && month <= 5) return 'spring';
+            if (month >= 6 && month <= 8) return 'summer';
+            if (month >= 9 && month <= 11) return 'autumn';
+            return 'winter';
+        }
+
+        function getTimeOfDay(hour) {
+            if (hour >= 5 && hour < 9) return 'dawn';
+            if (hour >= 9 && hour < 12) return 'morning';
+            if (hour >= 12 && hour < 17) return 'afternoon';
+            if (hour >= 17 && hour < 21) return 'dusk';
+            return 'night';
+        }
+
+        function checkMoonPreference(preference, phase) {
+            if (preference === 'any') return true;
+            if (preference === 'full' && (phase > 40 && phase < 60)) return true;
+            if (preference === 'new' && (phase < 10 || phase > 90)) return true;
+            return false;
+        }
+
+        function getRecommendation(score) {
+            if (score >= 70) return 'Ausgezeichnet';
+            if (score >= 50) return 'Gut';
+            if (score >= 30) return 'Mäßig';
+            return 'Schwierig';
+        }
+
+        function renderProbabilities(probabilities) {
+            const container = document.getElementById('probabilityGrid');
+            container.innerHTML = '';
+
+            for (const [key, data] of Object.entries(probabilities)) {
+                const fish = fishDatabase[key];
+                const probabilityClass = data.score >= 70 ? 'high' : data.score >= 40 ? 'medium' : 'low';
+
+                const div = document.createElement('div');
+                div.className = `fish-probability probability-${probabilityClass}`;
+                div.innerHTML = `
+                    <div class="fish-info">
+                        <div class="fish-icon">${fish.icon}</div>
+                        <div>
+                            <div class="fish-name">${fish.name}</div>
+                            <div class="fish-recommendation">${data.recommendation}</div>
+                        </div>
+                    </div>
+                    <div class="probability-display">
+                        <div class="probability-bar">
+                             <div class="probability-fill" style="width: ${data.score}%"></div>
+                        </div>
+                        <span style="font-weight: 600;">${data.score}%</span>
+                    </div>
+                `;
+
+                // Add click handler for details
+                div.onclick = () => showProbabilityDetails(key, data);
+                container.appendChild(div);
+            }
+        }
+
+        // Show probability details modal
+        function showProbabilityDetails(fishKey, probabilityData) {
+            const fish = fishDatabase[fishKey];
+            const modal = document.getElementById('dayModal');
+            const title = document.getElementById('dayModalTitle');
+            const content = document.getElementById('dayModalContent');
+
+            title.textContent = `${fish.name} - Bissanalyse`;
+
+            let factorsHtml = probabilityData.factors.map(f => `
+                <div class="factor-item" style="display: flex; justify-content: space-between; padding: 0.5rem; background: var(--bg-tertiary); margin: 0.5rem 0; border-radius: var(--radius-sm);">
+                    <span>${f.name}: ${f.value}</span>
+                    <span style="font-weight: 600; color: ${f.score > 0 ? '#27ae60' : '#e74c3c'}">${f.score > 0 ? '+' : ''}${f.score}</span>
+                </div>
+            `).join('');
+
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    <div style="font-size: 3rem;">${fish.icon}</div>
+                    <h3>${fish.scientificName}</h3>
+                    <div class="probability-bar" style="width: 200px; height: 20px; margin: 1rem auto;">
+                        <div class="probability-fill" style="width: ${probabilityData.score}%; height: 100%;"></div>
+                    </div>
+                    <p style="font-size: 1.5rem; font-weight: 600;">${probabilityData.score}% - ${probabilityData.recommendation}</p>
+                </div>
+
+                <h4>Einflussfaktoren:</h4>
+                ${factorsHtml}
+
+                <div style="margin-top: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: var(--radius-md);">
+                    <h4>Empfohlene Methoden:</h4>
+                    <p>${getMethodRecommendation(fishKey, getSeason(new Date().getMonth() + 1))}</p>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        // Get method recommendations based on fish and season
+        function getMethodRecommendation(fishKey, season) {
+            const recommendations = {
+                pike: {
+                    spring: "Spinnfischen mit Gummifischen (10-18cm) am Jigkopf, langsam über Grund geführt. Wobbler an Schilfkanten. Köderfisch an bekannten Standplätzen.",
+                    summer: "Oberflächenköder (Popper, Froschimitate) in der Dämmerung. Große Gummifische in tiefen Bereichen. Schleppfischen in Talsperren.",
+                    autumn: "Große Köder verwenden! Gummifische 15-30cm, große Wobbler, Swimbaits. Bereiche mit Futterfischschwärmen suchen.",
+                    winter: "Sehr langsame Köderführung mit großen Gummifischen am leichten Jigkopf. Lange Pausen, tiefe Löcher befischen."
+                },
+                zander: {
+                    spring: "Gummifische (8-15cm) am Jigkopf, Faulenzer-Methode an Steinpackungen. Schlanke Wobbler in der Dämmerung.",
+                    summer: "Nachtangeln ist Trumpf! Vertikalangeln vom Boot. Kleine Köderfische oder Fetzen an der Grundmontage.",
+                    autumn: "Größere Gummifische (10-16cm), Drop-Shot-Rig an tiefen Kanten. Futterfischschwärme mit Echolot suchen.",
+                    winter: "Kleine Gummifische (7-10cm) am Drop-Shot oder leichten Jig. Extrem langsame Führung, Vertikalangeln."
+                },
+                perch: {
+                    spring: "Kleine Gummifische (3-7cm), Spinner Größe 0-3, Drop-Shot mit Wurm. An Strukturen wie Stegen und Spundwänden.",
+                    summer: "Oberflächenköder bei Raubzügen, Drop-Shot in verschiedenen Tiefen. Auf Möwenaktivität achten!",
+                    autumn: "Etwas größere Köder, Vertikalangeln an Kanten. Jig-Spinner und Tailspinner sind sehr effektiv.",
+                    winter: "Drop-Shot mit kleinen Ködern oder Naturködern. Sehr langsames Finesse-Angeln an tiefen Stellen."
+                },
+                eel: {
+                    spring: "Grundmontage mit Tauwurm, abends und nachts. Strömungsberuhigte Bereiche bevorzugen.",
+                    summer: "Warme, schwüle Nächte sind ideal! Tauwurm oder Köderfischfetzen am Grund. Nach Gewittern besonders gut.",
+                    autumn: "Weiterhin Grundmontage, besonders bei steigendem Wasser nach warmem Regen.",
+                    winter: "Aale sind inaktiv und graben sich ein. Angeln nicht empfehlenswert."
+                },
+                carp: {
+                    spring: "Posenangeln in flachen, sonnigen Buchten. Mais, kleine Boilies, Method Feeder mit kurzen Vorfächern.",
+                    summer: "Boilies 15-24mm, Partikel anfüttern. Nachts sehr aktiv. Oberflächenangeln mit Schwimmbrot möglich.",
+                    autumn: "Proteinreiche Köder, fischige Boilies. Längere Ansitze an Fressrouten. Viel anfüttern!",
+                    winter: "Sehr feines Angeln mit Mini-Boilies in Neonfarben, einzelne Maiskörner. PVA-Sticks, tiefe Bereiche."
+                },
+                trout: {
+                    spring: "Spinner Größe 0-2, kleine Wobbler, Nymphen beim Fliegenfischen. Insektenschlupf beachten!",
+                    summer: "Früh morgens und spät abends. Trockenfliegen bei Insektenaktivität. Kleine Köder in tiefen, kühlen Bereichen.",
+                    autumn: "Größere Spinner und Wobbler, Streamer beim Fliegenfischen. Forellen sind sehr aktiv und aggressiv.",
+                    winter: "Langsam geführte Spoons, Naturköder am Grund. In Teichen weiterhin fangbar."
+                },
+                tench: {
+                    spring: "Feine Posenmontage, Mais und Maden. Langsam steigende Aktivität in pflanzenreichen Zonen.",
+                    summer: "Früh morgens und abends. Method Feeder oder feine Grundmontage. Seerosenfelder und Krautbänke.",
+                    autumn: "Aktivität nimmt ab. Weiterhin feine Montagen in tieferen Bereichen.",
+                    winter: "Schleien graben sich im Schlamm ein. Angeln nicht erfolgversprechend."
+                }
+            };
+
+            return recommendations[fishKey]?.[season] || "Keine spezifische Empfehlung verfügbar.";
+        }
+
+        // Calendar Functions
+        function initializeCalendar() {
+            renderCalendar();
+        }
+
+        function renderCalendar() {
+            const year = appState.currentYear;
+            const month = appState.currentMonth;
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            const today = new Date();
+
+            // Update header
+            const monthNames = ['Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
+                               'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'];
+            document.getElementById('currentMonthYear').textContent = `${monthNames[month]} ${year}`;
+
+            // Clear and populate calendar
+            const grid = document.getElementById('calendarGrid');
+            grid.innerHTML = '';
+
+            // Day headers
+            const dayHeaders = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+            dayHeaders.forEach(day => {
+                const header = document.createElement('div');
+                header.className = 'calendar-day-header';
+                header.textContent = day;
+                grid.appendChild(header);
+            });
+
+            // Empty cells before first day
+            for (let i = 0; i < firstDay; i++) {
+                const empty = document.createElement('div');
+                grid.appendChild(empty);
+            }
+
+            // Calendar days
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+
+                const currentDate = new Date(year, month, day);
+                const dateString = formatDateForStorage(currentDate);
+
+                // Check if today
+                if (currentDate.toDateString() === today.toDateString()) {
+                    dayElement.classList.add('today');
+                }
+
+                // Check for catches
+                const dayCatches = appState.catches.filter(c => c.date.startsWith(dateString));
+                if (dayCatches.length > 0) {
+                    dayElement.classList.add('has-catch');
+                }
+
+                dayElement.innerHTML = `
+                    <span class="day-number">${day}</span>
+                    <span class="day-weather">${getWeatherIcon(currentDate)}</span>
+                `;
+
+                dayElement.onclick = () => openDayDetails(currentDate);
+                grid.appendChild(dayElement);
+            }
+        }
+
+        function formatDateForStorage(date) {
+            return date.toISOString().split('T')[0];
+        }
+
+        function getWeatherIcon(date) {
+            // Simplified weather icon logic
+            const icons = ['☀️', '⛅', '☁️', '🌧️'];
+            return icons[Math.floor(Math.random() * icons.length)];
+        }
+
+        function previousMonth() {
+            appState.currentMonth--;
+            if (appState.currentMonth < 0) {
+                appState.currentMonth = 11;
+                appState.currentYear--;
+            }
+            renderCalendar();
+        }
+
+        function nextMonth() {
+            appState.currentMonth++;
+            if (appState.currentMonth > 11) {
+                appState.currentMonth = 0;
+                appState.currentYear++;
+            }
+            renderCalendar();
+        }
+
+        function goToToday() {
+            const today = new Date();
+            appState.currentMonth = today.getMonth();
+            appState.currentYear = today.getFullYear();
+            renderCalendar();
+        }
+
+        // Day Details Modal
+        function openDayDetails(date) {
+            const modal = document.getElementById('dayModal');
+            const title = document.getElementById('dayModalTitle');
+            const content = document.getElementById('dayModalContent');
+
+            const dateString = formatDateForStorage(date);
+            const dayCatches = appState.catches.filter(c => c.date.startsWith(dateString));
+
+            title.textContent = date.toLocaleDateString('de-DE', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+
+            // Calculate historical probabilities for this day
+            const historicalConditions = getHistoricalConditions(date);
+
+            content.innerHTML = `
+                <div class="day-conditions">
+                    <h3>Bedingungen an diesem Tag:</h3>
+                    <div class="conditions-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin: 1rem 0;">
+                        <div class="condition-item">
+                            <i class="fas fa-temperature-high"></i> Temperatur: ${historicalConditions.temp}°C
+                        </div>
+                        <div class="condition-item">
+                            <i class="fas fa-compress-arrows-alt"></i> Luftdruck: ${historicalConditions.pressure} hPa
+                        </div>
+                        <div class="condition-item">
+                            <i class="fas fa-wind"></i> Wind: ${historicalConditions.wind} km/h
+                        </div>
+                        <div class="condition-item">
+                            <i class="fas fa-moon"></i> Mondphase: ${historicalConditions.moonPhase}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="day-catches">
+                    <h3>Fänge an diesem Tag (${dayCatches.length}):</h3>
+                    ${dayCatches.length > 0 ? renderDayCatches(dayCatches) : '<p>Keine Fänge dokumentiert</p>'}
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <button class="btn" onclick="openCatchModalForDate('${dateString}')">
+                        <i class="fas fa-plus"></i> Fang hinzufügen
+                    </button>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        function getHistoricalConditions(date) {
+            // Simulate historical conditions based on date
+            const month = date.getMonth();
+            const baseTemp = [2, 4, 8, 12, 16, 20, 22, 21, 17, 12, 7, 3][month];
+
+            return {
+                temp: baseTemp + Math.random() * 4 - 2,
+                pressure: 1000 + Math.random() * 30,
+                wind: Math.random() * 20,
+                moonPhase: getMoonPhaseName(calculateMoonPhase(date).phase)
+            };
+        }
+
+        function renderDayCatches(catches) {
+            return catches.map(catchItem => `
+                <div class="catch-item" style="margin: 1rem 0;">
+                    ${catchItem.photo ? `<img src="${catchItem.photo}" class="catch-photo" alt="Fangfoto">` : ''}
+                    <div class="catch-details">
+                        <div class="catch-species">${fishDatabase[catchItem.species].name} - ${catchItem.size}cm ${catchItem.weight ? `/ ${catchItem.weight}g` : ''}</div>
+                        <div class="catch-info">
+                            ${catchItem.time} Uhr | ${catchItem.bait || 'Kein Köder angegeben'} | ${catchItem.location || 'Kein Ort angegeben'}
+                        </div>
+                        ${catchItem.notes ? `<div class="catch-notes" style="margin-top: 0.5rem; font-style: italic;">${catchItem.notes}</div>` : ''}
+                    </div>
+                    <div class="catch-actions">
+                        <button class="btn btn-icon" onclick="editCatch('${catchItem.id}')">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-icon" onclick="deleteCatch('${catchItem.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function closeDayModal() {
+            document.getElementById('dayModal').classList.remove('active');
+        }
+
+        // Catch Management
+        function openCatchModal() {
+            document.getElementById('catchModal').classList.add('active');
+        }
+
+        function openCatchModalForDate(dateString) {
+            closeDayModal();
+            document.getElementById('catchDate').value = dateString + 'T12:00';
+            openCatchModal();
+        }
+
+        function closeCatchModal() {
+            document.getElementById('catchModal').classList.remove('active');
+            document.getElementById('catchForm').reset();
+            document.getElementById('photoPreview').style.display = 'none';
+        }
+
+        function saveCatch(event) {
+            event.preventDefault();
+
+            const formData = {
+                id: Date.now().toString(),
+                date: document.getElementById('catchDate').value.split('T')[0],
+                time: document.getElementById('catchDate').value.split('T')[1],
+                species: document.getElementById('fishSpecies').value,
+                size: parseInt(document.getElementById('fishSize').value),
+                weight: parseInt(document.getElementById('fishWeight').value) || null,
+                bait: document.getElementById('bait').value,
+                method: document.getElementById('method').value,
+                location: document.getElementById('location').value,
+                notes: document.getElementById('notes').value,
+                photo: null,
+                conditions: getCurrentConditions()
+            };
+
+            // Handle photo
+            const photoInput = document.getElementById('catchPhoto');
+            if (photoInput.files.length > 0) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    formData.photo = e.target.result;
+                    saveCatchData(formData);
+                };
+                reader.readAsDataURL(photoInput.files[0]);
+            } else {
+                saveCatchData(formData);
+            }
+        }
+
+        function saveCatchData(catchData) {
+            appState.catches.push(catchData);
+            localStorage.setItem('fishingCatches', JSON.stringify(appState.catches));
+
+            closeCatchModal();
+            renderCalendar();
+            updateStats();
+            renderRecentCatches();
+
+            // Show success notification
+            showNotification('Fang erfolgreich gespeichert!', 'success');
+        }
+
+        function getCurrentConditions() {
+            return {
+                temp: appState.weatherData?.temp || null,
+                pressure: appState.weatherData?.pressure || null,
+                wind: appState.weatherData?.windSpeed || null,
+                moonPhase: appState.moonData?.phase.phase || null,
+                clouds: appState.weatherData?.clouds || null,
+                humidity: appState.weatherData?.humidity || null
+            };
+        }
+
+        function deleteCatch(id) {
+            if (confirm('Möchten Sie diesen Fang wirklich löschen?')) {
+                appState.catches = appState.catches.filter(c => c.id !== id);
+                localStorage.setItem('fishingCatches', JSON.stringify(appState.catches));
+
+                renderCalendar();
+                updateStats();
+                renderRecentCatches();
+                closeDayModal();
+
+                showNotification('Fang gelöscht', 'info');
+            }
+        }
+
+        function editCatch(id) {
+            const catchItem = appState.catches.find(c => c.id === id);
+            if (!catchItem) return;
+
+            // Populate form with existing data
+            document.getElementById('catchDate').value = catchItem.date + 'T' + catchItem.time;
+            document.getElementById('fishSpecies').value = catchItem.species;
+            document.getElementById('fishSize').value = catchItem.size;
+            document.getElementById('fishWeight').value = catchItem.weight || '';
+            document.getElementById('bait').value = catchItem.bait || '';
+            document.getElementById('method').value = catchItem.method || '';
+            document.getElementById('location').value = catchItem.location || '';
+            document.getElementById('notes').value = catchItem.notes || '';
+
+            // Show photo if exists
+            if (catchItem.photo) {
+                document.getElementById('previewImage').src = catchItem.photo;
+                document.getElementById('photoPreview').style.display = 'block';
+            }
+
+            // Remove old catch and open modal
+            appState.catches = appState.catches.filter(c => c.id !== id);
+            closeDayModal();
+            openCatchModal();
+        }
+
+        // Photo handling
+        function previewPhoto(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('previewImage').src = e.target.result;
+                    document.getElementById('photoPreview').style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        // Statistics
+        function updateStats() {
+            const totalCatches = appState.catches.length;
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+
+            const thisMonthCatches = appState.catches.filter(c => {
+                const catchDate = new Date(c.date);
+                return catchDate.getMonth() === currentMonth && catchDate.getFullYear() === currentYear;
+            }).length;
+
+            // Find most caught species
+            const speciesCount = {};
+            appState.catches.forEach(c => {
+                speciesCount[c.species] = (speciesCount[c.species] || 0) + 1;
+            });
+
+            const bestFish = Object.keys(speciesCount).reduce((a, b) =>
+                speciesCount[a] > speciesCount[b] ? a : b, '');
+
+            // Update UI
+            document.getElementById('totalCatches').textContent = totalCatches;
+            document.getElementById('thisMonth').textContent = thisMonthCatches;
+            document.getElementById('bestFish').textContent = bestFish ? fishDatabase[bestFish].name : '-';
+        }
+
+        // Recent catches list
+        function renderRecentCatches() {
+            const container = document.getElementById('catchList');
+            const recentCatches = appState.catches
+                .sort((a, b) => new Date(b.date + 'T' + b.time) - new Date(a.date + 'T' + a.time))
+                .slice(0, 5);
+
+            if (recentCatches.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Noch keine Fänge dokumentiert</p>';
+                return;
+            }
+
+            container.innerHTML = recentCatches.map(catchItem => `
+                <div class="catch-item">
+                    ${catchItem.photo ? `<img src="${catchItem.photo}" class="catch-photo" alt="Fangfoto">` :
+                      `<div class="catch-photo" style="background: var(--bg-tertiary); display: flex; align-items: center; justify-content: center; font-size: 2rem;">${fishDatabase[catchItem.species].icon}</div>`}
+                    <div class="catch-details">
+                        <div class="catch-species">${fishDatabase[catchItem.species].name} - ${catchItem.size}cm ${catchItem.weight ? `/ ${catchItem.weight}g` : ''}</div>
+                        <div class="catch-info">
+                            ${new Date(catchItem.date).toLocaleDateString('de-DE')} ${catchItem.time} Uhr
+                            ${catchItem.location ? `| ${catchItem.location}` : ''}
+                        </div>
+                        ${catchItem.bait ? `<div class="catch-info">Köder: ${catchItem.bait}</div>` : ''}
+                    </div>
+                    <div class="catch-actions">
+                        <button class="btn btn-icon" onclick="viewCatchDetails('${catchItem.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function viewCatchDetails(id) {
+            const catchItem = appState.catches.find(c => c.id === id);
+            if (!catchItem) return;
+
+            const modal = document.getElementById('dayModal');
+            const title = document.getElementById('dayModalTitle');
+            const content = document.getElementById('dayModalContent');
+
+            const fish = fishDatabase[catchItem.species];
+
+            title.textContent = `${fish.name} - ${catchItem.size}cm`;
+
+            content.innerHTML = `
+                <div style="text-align: center; margin-bottom: 2rem;">
+                    ${catchItem.photo ? `<img src="${catchItem.photo}" style="max-width: 100%; max-height: 400px; border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);">` : ''}
+                </div>
+
+                <div class="catch-detail-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div class="detail-item">
+                        <strong>Datum:</strong> ${new Date(catchItem.date).toLocaleDateString('de-DE')}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Uhrzeit:</strong> ${catchItem.time} Uhr
+                    </div>
+                    <div class="detail-item">
+                        <strong>Größe:</strong> ${catchItem.size} cm
+                    </div>
+                    <div class="detail-item">
+                        <strong>Gewicht:</strong> ${catchItem.weight || '-'} g
+                    </div>
+                    <div class="detail-item">
+                        <strong>Köder:</strong> ${catchItem.bait || '-'}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Methode:</strong> ${catchItem.method || '-'}
+                    </div>
+                    <div class="detail-item" style="grid-column: 1 / -1;">
+                        <strong>Gewässer:</strong> ${catchItem.location || '-'}
+                    </div>
+                </div>
+
+                ${catchItem.conditions ? `
+                    <div style="margin-top: 2rem;">
+                        <h4>Bedingungen beim Fang:</h4>
+                        <div class="conditions-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-top: 1rem;">
+                            ${catchItem.conditions.temp ? `<div><i class="fas fa-temperature-high"></i> ${Math.round(catchItem.conditions.temp)}°C</div>` : ''}
+                            ${catchItem.conditions.pressure ? `<div><i class="fas fa-compress-arrows-alt"></i> ${Math.round(catchItem.conditions.pressure)} hPa</div>` : ''}
+                            ${catchItem.conditions.wind ? `<div><i class="fas fa-wind"></i> ${Math.round(catchItem.conditions.wind)} km/h</div>` : ''}
+                            ${catchItem.conditions.humidity ? `<div><i class="fas fa-tint"></i> ${Math.round(catchItem.conditions.humidity)}% Luftfeuchtigkeit</div>` : ''}
+                        </div>
+                    </div>
+                ` : ''}
+
+                ${catchItem.notes ? `
+                    <div style="margin-top: 2rem;">
+                        <h4>Notizen:</h4>
+                        <p style="background: var(--bg-tertiary); padding: 1rem; border-radius: var(--radius-md);">${catchItem.notes}</p>
+                    </div>
+                ` : ''}
+
+                <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+                    <button class="btn btn-icon" onclick="editCatch('${catchItem.id}')">
+                        <i class="fas fa-edit"></i> Bearbeiten
+                    </button>
+                    <button class="btn btn-icon" onclick="deleteCatch('${catchItem.id}')">
+                        <i class="fas fa-trash"></i> Löschen
+                    </button>
+                </div>
+            `;
+
+            modal.classList.add('active');
+        }
+
+        // Theme Management
+        function toggleTheme() {
+            appState.theme = appState.theme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', appState.theme);
+            localStorage.setItem('theme', appState.theme);
+            updateThemeIcon();
+        }
+
+        function updateThemeIcon() {
+            const icon = document.getElementById('themeIcon');
+            icon.className = appState.theme === 'light' ? 'fas fa-moon' : 'fas fa-sun';
+        }
+
+        // Notifications
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.style.cssText = `
+                position: fixed;
+                top: 2rem;
+                right: 2rem;
+                background: ${type === 'success' ? 'var(--success-gradient)' :
+                             type === 'error' ? 'var(--danger-gradient)' :
+                             'var(--primary-gradient)'};
+                color: white;
+                padding: 1rem 2rem;
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+                z-index: 3000;
+                animation: slideInRight 0.3s ease-out;
+            `;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOutRight 0.3s ease-out';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        // Add slide animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+
+            @keyframes slideOutRight {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Refresh probabilities
+        function refreshProbabilities() {
+            const icon = document.querySelector('.btn-icon i');
+            icon.style.animation = 'spin 1s ease-in-out';
+
+            updateWeatherData();
+            updateMoonData();
+            calculateProbabilities();
+
+            setTimeout(() => {
+                icon.style.animation = '';
+                showNotification('Daten aktualisiert', 'success');
+            }, 1000);
+        }
+
+        // Export/Import functionality
+        function exportData() {
+            const data = {
+                version: '1.0',
+                exportDate: new Date().toISOString(),
+                catches: appState.catches
+            };
+
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `fishing-data-${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.catches && Array.isArray(data.catches)) {
+                        appState.catches = [...appState.catches, ...data.catches];
+                        localStorage.setItem('fishingCatches', JSON.stringify(appState.catches));
+
+                        renderCalendar();
+                        updateStats();
+                        renderRecentCatches();
+
+                        showNotification(`${data.catches.length} Fänge importiert`, 'success');
+                    }
+                } catch (error) {
+                    showNotification('Fehler beim Importieren der Daten', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // Service Worker for offline functionality
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('data:text/javascript,' + encodeURIComponent(`
+                self.addEventListener('install', e => {
+                    e.waitUntil(
+                        caches.open('fishing-app-v1').then(cache => {
+                            return cache.addAll(['/']);
+                        })
+                    );
+                });
+
+                self.addEventListener('fetch', e => {
+                    e.respondWith(
+                        caches.match(e.request).then(response => {
+                            return response || fetch(e.request);
+                        })
+                    );
+                });
+            `));
+        }
+    </script>
+</body>
+</html>
