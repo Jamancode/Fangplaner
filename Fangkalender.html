@@ -1433,7 +1433,7 @@
         @media (max-width: 768px) {
     /* Header minimal und dezent */
     header {
-        padding: 0.75rem 1rem; /* Etwas mehr Padding für bessere Lesbarkeit */
+        padding: 0.75rem 1rem;
     }
 
     .header-content {
@@ -1445,45 +1445,46 @@
 
     /* App-Name dezent aber lesbar */
     h1 {
-        font-size: 1.4rem; /* Feste, gut lesbare Größe */
+        font-size: 1.4rem;
         margin: 0;
-        font-weight: 600; /* Etwas weniger fett */
-        opacity: 0.95; /* Leicht dezent */
+        font-weight: 600;
+        opacity: 0.95;
     }
 
-    /* Weather Widget: Eine kompakte, gut lesbare Zeile */
+    /* Weather Widget: Immer sichtbar, anpassende Größen */
     .weather-widget {
-        width: auto; /* Nicht volle Breite */
+        width: auto;
         max-width: 100%;
         justify-content: center;
         flex-wrap: nowrap;
         padding: 0.4rem 1rem;
-        gap: 1rem; /* Ausreichend Abstand für Lesbarkeit */
-        font-size: 0.85rem; /* Gut lesbare Größe */
+        gap: 1rem;
+        font-size: 0.85rem;
         border-radius: var(--radius-lg);
-        background: rgba(255, 255, 255, 0.08); /* Dezenter Hintergrund */
+        background: rgba(255, 255, 255, 0.08);
         backdrop-filter: blur(8px);
         border: 1px solid rgba(255,255,255,0.15);
+        overflow-x: auto; /* Falls zu breit, horizontal scrollen */
     }
 
     .weather-item {
-        gap: 0.4rem; /* Guter Abstand zwischen Icon und Text */
+        gap: 0.4rem;
         flex-shrink: 0;
         display: flex;
         align-items: center;
+        min-width: max-content;
     }
 
     .weather-item i {
-        font-size: 1rem; /* Icons gut erkennbar */
+        font-size: 1rem;
         opacity: 0.9;
     }
 
     .weather-item span {
-        font-size: 0.85rem; /* Gut lesbare Textgröße */
-        font-weight: 500; /* Etwas mehr Gewicht für bessere Lesbarkeit */
+        font-size: 0.85rem;
+        font-weight: 500;
     }
 
-    /* Pressure Trend */
     .pressure-trend {
         display: inline-flex;
         align-items: center;
@@ -1495,7 +1496,7 @@
     }
 }
 
-/* Für sehr kleine Bildschirme - noch kompakter aber lesbar */
+/* Für kleinere Bildschirme - kleinere Schrift, aber alles sichtbar */
 @media (max-width: 480px) {
     header {
         padding: 0.6rem 0.8rem;
@@ -1507,17 +1508,82 @@
 
     .weather-widget {
         padding: 0.35rem 0.8rem;
-        gap: 0.8rem;
+        gap: 0.7rem; /* Etwas engere Abstände */
         font-size: 0.8rem;
+    }
+
+    .weather-item {
+        gap: 0.3rem;
+    }
+
+    .weather-item i {
+        font-size: 0.9rem;
     }
 
     .weather-item span {
         font-size: 0.8rem;
     }
 
-    /* Optional: Mondphase auf sehr kleinen Bildschirmen ausblenden */
-    .weather-item:last-child {
-        display: none;
+    .pressure-trend i {
+        font-size: 0.7rem;
+    }
+}
+
+/* Für sehr kleine Bildschirme - noch kleinere Schrift */
+@media (max-width: 380px) {
+    h1 {
+        font-size: 1.1rem;
+    }
+
+    .weather-widget {
+        padding: 0.3rem 0.6rem;
+        gap: 0.5rem; /* Noch engere Abstände */
+        font-size: 0.75rem;
+    }
+
+    .weather-item {
+        gap: 0.25rem;
+    }
+
+    .weather-item i {
+        font-size: 0.8rem;
+    }
+
+    .weather-item span {
+        font-size: 0.75rem;
+    }
+
+    .pressure-trend i {
+        font-size: 0.65rem;
+    }
+}
+
+/* Für extrem kleine Bildschirme - minimale Schrift */
+@media (max-width: 320px) {
+    h1 {
+        font-size: 1rem;
+    }
+
+    .weather-widget {
+        padding: 0.25rem 0.5rem;
+        gap: 0.4rem;
+        font-size: 0.7rem;
+    }
+
+    .weather-item {
+        gap: 0.2rem;
+    }
+
+    .weather-item i {
+        font-size: 0.75rem;
+    }
+
+    .weather-item span {
+        font-size: 0.7rem;
+    }
+
+    .pressure-trend i {
+        font-size: 0.6rem;
     }
 }
 
