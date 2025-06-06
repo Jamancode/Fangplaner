@@ -1,22 +1,632 @@
-{
-  "name": "Dein Angelfreund - Fangkalender",
-  "short_name": "Angelfreund",
-  "description": "PWA Version des Fangkalenders für Angler.",
-  "start_url": "/PWA/index.html",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#40127c",
-  "orientation": "portrait",
-  "icons": [
-    {
-      "src": "images/icon-192x192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "images/icon-512x512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+const CACHE_NAME = 'fangkalender-pwa-cache-v2';
+const STATIC_CACHE = 'fangkalender-static-v2';
+const API_CACHE = 'fangkalender-api-v2';
+const USER_DATA_CACHE = 'fangkalender-user-data-v1';
+
+// Kernressourcen für den Fangkalender
+const CRITICAL_RESOURCES = [
+  '/PWA/index.html',
+  '/PWA/manifest.json',
+  // Icons werden nur gecacht wenn sie existieren
+  // Werden dynamisch beim ersten Load hinzugefügt
+];
+
+// Optionale Ressourcen (werden gecacht wenn verfügbar)
+const OPTIONAL_RESOURCES = [
+  '/PWA/images/icon-72x72.png',
+  '/PWA/images/icon-96x96.png', 
+  '/PWA/images/icon-128x128.png',
+  '/PWA/images/icon-144x144.png',
+  '/PWA/images/icon-152x152.png',
+  '/PWA/images/icon-192x192.png',
+  '/PWA/images/icon-384x384.png', 
+  '/PWA/images/icon-512x512.png',
+  '/PWA/images/shortcut-add-catch.png',
+  '/PWA/images/shortcut-forecast.png',
+  '/PWA/images/shortcut-stats.png'
+];
+
+// API-Patterns für Wetter und Solunar-Daten
+const API_PATTERNS = [
+  /openweathermap\.org\/data/,
+  /api\.sunrise-sunset\.org/,
+  /.*weather.*api.*/i,
+  /solunar/i,
+  /moon.*phase/i,
+  /astronomical/i
+];
+
+// Install: Verbessertes Caching mit Fehlerbehandlung
+self.addEventListener('install', event => {
+  console.log('🎣 Fangkalender ServiceWorker: Install event');
+  
+  event.waitUntil(
+    Promise.all([
+      // Kritische Ressourcen MÜSSEN funktionieren
+      caches.open(STATIC_CACHE).then(async cache => {
+        try {
+          await cache.addAll(CRITICAL_RESOURCES);
+          console.log('✅ Kritische Ressourcen gecacht');
+        } catch (error) {
+          console.error('❌ Fehler beim Cachen kritischer Ressourcen:', error);
+          throw error;
+        }
+      }),
+      
+      // Optionale Ressourcen - Fehler werden ignoriert
+      caches.open(STATIC_CACHE).then(async cache => {
+        for (const resource of OPTIONAL_RESOURCES) {
+          try {
+            await cache.add(resource);
+            console.log(`✅ Optionale Ressource gecacht: ${resource}`);
+          } catch (error) {
+            console.log(`ℹ️ Optionale Ressource nicht verfügbar: ${resource}`);
+          }
+        }
+      }),
+      
+      // Cache-Container vorbereiten
+      caches.open(API_CACHE),
+      caches.open(USER_DATA_CACHE)
+    ]).then(() => {
+      console.log('🎣 Fangkalender ServiceWorker: Installation erfolgreich');
+      self.skipWaiting();
+    }).catch(err => {
+      console.error('❌ Fangkalender ServiceWorker: Installation fehlgeschlagen:', err);
+    })
+  );
+});
+
+// Activate: Intelligente Cache-Bereinigung
+self.addEventListener('activate', event => {
+  console.log('🎣 Fangkalender ServiceWorker: Activate event');
+  
+  event.waitUntil(
+    Promise.all([
+      // Veraltete Caches bereinigen
+      caches.keys().then(cacheNames => {
+        const validCaches = [STATIC_CACHE, API_CACHE, USER_DATA_CACHE];
+        return Promise.all(
+          cacheNames.map(cache => {
+            if (!validCaches.includes(cache)) {
+              console.log(`🗑️ Lösche veralteten Cache: ${cache}`);
+              return caches.delete(cache);
+            }
+          })
+        );
+      }),
+      
+      // Alle Clients sofort übernehmen
+      self.clients.claim()
+    ]).then(() => {
+      console.log('✅ Fangkalender ServiceWorker aktiviert');
+    })
+  );
+});
+
+// Fetch: Spezialisierte Strategien für Fangkalender
+self.addEventListener('fetch', event => {
+  const url = new URL(event.request.url);
+  const pathname = url.pathname;
+  
+  // PWA-Scope prüfen
+  if (!pathname.startsWith('/PWA/') && !API_PATTERNS.some(pattern => pattern.test(url.href))) {
+    return; // Außerhalb unseres Scopes
+  }
+  
+  // App Shell (HTML, JS, CSS): Cache First
+  if (pathname.endsWith('.html') || 
+      pathname.endsWith('.js') || 
+      pathname.endsWith('.css') ||
+      pathname.includes('/PWA/index.html')) {
+    event.respondWith(handleAppShell(event.request));
+    return;
+  }
+  
+  // Icons und Bilder: Cache First mit Fallback
+  if (pathname.includes('/images/') || 
+      event.request.destination === 'image') {
+    event.respondWith(handleImages(event.request));
+    return;
+  }
+  
+  // Wetter & Solunar APIs: Network First mit intelligentem Cache
+  if (API_PATTERNS.some(pattern => pattern.test(url.href))) {
+    event.respondWith(handleWeatherAPI(event.request));
+    return;
+  }
+  
+  // Manifest: Cache First
+  if (pathname.endsWith('manifest.json')) {
+    event.respondWith(handleManifest(event.request));
+    return;
+  }
+  
+  // Share Target Handling
+  if (url.searchParams.has('share-target')) {
+    event.respondWith(handleShareTarget(event.request));
+    return;
+  }
+  
+  // Geo-Koordinaten aus Protocol Handler
+  if (url.searchParams.has('coordinates')) {
+    event.respondWith(handleGeoCoordinates(event.request));
+    return;
+  }
+  
+  // Default: Network First
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
+  );
+});
+
+// App Shell Handler - Cache First für maximale Offline-Fähigkeit
+async function handleAppShell(request) {
+  try {
+    const cache = await caches.open(STATIC_CACHE);
+    const cachedResponse = await cache.match(request);
+    
+    if (cachedResponse) {
+      // Stale-while-revalidate für App Shell
+      fetch(request).then(networkResponse => {
+        if (networkResponse && networkResponse.status === 200) {
+          cache.put(request, networkResponse.clone());
+        }
+      }).catch(() => {
+        // Netzwerk-Update fehlgeschlagen, aber Cache funktioniert
+      });
+      
+      return cachedResponse;
     }
-  ]
+    
+    // Nicht im Cache, versuche Netzwerk
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse && networkResponse.status === 200) {
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.error('App Shell Fehler:', error);
+    
+    // Fallback auf Offline-Seite
+    if (request.url.includes('index.html') || request.mode === 'navigate') {
+      return createFangkalenderOfflinePage();
+    }
+    
+    throw error;
+  }
 }
+
+// Bilder Handler mit Placeholder-Fallback
+async function handleImages(request) {
+  try {
+    const cache = await caches.open(STATIC_CACHE);
+    const cachedResponse = await cache.match(request);
+    
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse && networkResponse.status === 200) {
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    // Fallback: Generiere SVG-Placeholder für Icons
+    if (request.url.includes('icon-') || request.url.includes('shortcut-')) {
+      return createIconPlaceholder(request.url);
+    }
+    
+    throw error;
+  }
+}
+
+// Wetter-API Handler mit intelligenter Cache-Strategie
+async function handleWeatherAPI(request) {
+  const cache = await caches.open(API_CACHE);
+  const cacheKey = `${request.url}-${new Date().toDateString()}`;
+  
+  try {
+    // Versuche aktuellen Network-Request
+    const networkResponse = await fetch(request);
+    
+    if (networkResponse && networkResponse.status === 200) {
+      const responseClone = networkResponse.clone();
+      const responseData = await responseClone.json();
+      
+      // Erweiterte Metadaten für Fangkalender
+      const cachedData = {
+        data: responseData,
+        timestamp: Date.now(),
+        url: request.url,
+        cacheKey: cacheKey,
+        fishingRelevance: calculateFishingRelevance(responseData)
+      };
+      
+      const cachedResponse = new Response(JSON.stringify(cachedData), {
+        headers: { 
+          'Content-Type': 'application/json',
+          'X-Cached-At': new Date().toISOString()
+        }
+      });
+      
+      cache.put(cacheKey, cachedResponse);
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    console.log('🌐 Netzwerk nicht verfügbar, verwende Cache für Wetterdaten');
+    
+    // Suche nach cached Data (heute oder gestern)
+    const today = new Date().toDateString();
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    
+    for (const dateKey of [today, yesterday]) {
+      const cacheKey = `${request.url}-${dateKey}`;
+      const cachedResponse = await cache.match(cacheKey);
+      
+      if (cachedResponse) {
+        const cachedData = await cachedResponse.json();
+        const age = Date.now() - cachedData.timestamp;
+        
+        return new Response(JSON.stringify(cachedData.data), {
+          headers: { 
+            'Content-Type': 'application/json',
+            'X-Cache': 'HIT',
+            'X-Cache-Age': Math.floor(age / 1000),
+            'X-Fishing-Relevance': cachedData.fishingRelevance || 'unknown'
+          }
+        });
+      }
+    }
+    
+    // Letzter Fallback: Dummy-Wetterdaten für Offline-Betrieb
+    return createOfflineWeatherResponse();
+  }
+}
+
+// Manifest Handler
+async function handleManifest(request) {
+  const cache = await caches.open(STATIC_CACHE);
+  
+  try {
+    const cachedResponse = await cache.match(request);
+    if (cachedResponse) return cachedResponse;
+    
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.status === 200) {
+      cache.put(request, networkResponse.clone());
+    }
+    
+    return networkResponse;
+  } catch (error) {
+    throw error;
+  }
+}
+
+// Share Target Handler für geteilte Inhalte
+async function handleShareTarget(request) {
+  const url = new URL(request.url);
+  const sharedData = {
+    title: url.searchParams.get('title'),
+    text: url.searchParams.get('text'), 
+    url: url.searchParams.get('url')
+  };
+  
+  // Weiterleitung zur App mit Share-Daten
+  const appUrl = new URL('/PWA/index.html', self.location.origin);
+  appUrl.searchParams.set('shared', JSON.stringify(sharedData));
+  
+  return Response.redirect(appUrl.toString(), 302);
+}
+
+// Geo-Koordinaten Handler
+async function handleGeoCoordinates(request) {
+  const url = new URL(request.url);
+  const coordinates = url.searchParams.get('coordinates');
+  
+  // Weiterleitung zur App mit Koordinaten
+  const appUrl = new URL('/PWA/index.html', self.location.origin);
+  appUrl.searchParams.set('geo', coordinates);
+  
+  return Response.redirect(appUrl.toString(), 302);
+}
+
+// Fishing Relevance Score für Wetterdaten
+function calculateFishingRelevance(weatherData) {
+  let score = 0;
+  
+  if (weatherData.main) {
+    const temp = weatherData.main.temp;
+    const pressure = weatherData.main.pressure;
+    
+    // Temperatur-Score (optimal für heimische Fische: 10-20°C)
+    if (temp >= 10 && temp <= 20) score += 3;
+    else if (temp >= 5 && temp <= 25) score += 1;
+    
+    // Luftdruck-Score (steigend = gut)
+    if (pressure > 1015) score += 2;
+    else if (pressure < 1000) score -= 1;
+  }
+  
+  if (weatherData.wind && weatherData.wind.speed < 5) {
+    score += 1; // Wenig Wind = gut
+  }
+  
+  if (weatherData.weather && weatherData.weather[0]) {
+    const condition = weatherData.weather[0].main.toLowerCase();
+    if (condition === 'clear') score += 1;
+    if (condition === 'rain') score -= 1;
+  }
+  
+  if (score >= 4) return 'excellent';
+  if (score >= 2) return 'good';
+  if (score >= 0) return 'fair';
+  return 'poor';
+}
+
+// Offline-Seite speziell für Fangkalender
+function createFangkalenderOfflinePage() {
+  const offlineHTML = `
+    <!DOCTYPE html>
+    <html lang="de">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Offline - Fangkalender</title>
+        <style>
+          body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #0a1a2e 0%, #16213e 50%, #1a365d 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 20px;
+          }
+          .offline-container {
+            max-width: 400px;
+            padding: 2rem;
+            background: rgba(255,255,255,0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+          }
+          .fishing-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            display: block;
+            animation: bob 2s ease-in-out infinite alternate;
+          }
+          @keyframes bob {
+            0% { transform: translateY(0px); }
+            100% { transform: translateY(-10px); }
+          }
+          h1 {
+            margin: 1rem 0;
+            color: #7dd3fc;
+            font-size: 1.5rem;
+          }
+          p {
+            font-size: 1rem;
+            opacity: 0.9;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+          }
+          .features {
+            text-align: left;
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+          }
+          .features h3 {
+            color: #7dd3fc;
+            margin-top: 0;
+            font-size: 1.1rem;
+          }
+          .features ul {
+            margin: 0;
+            padding-left: 1.2rem;
+          }
+          .features li {
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+          }
+          button {
+            margin-top: 1.5rem;
+            padding: 12px 24px;
+            font-size: 1rem;
+            background: linear-gradient(45deg, #7dd3fc, #0ea5e9);
+            color: #0a1a2e;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(125, 211, 252, 0.3);
+          }
+          button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(125, 211, 252, 0.4);
+          }
+          .status {
+            margin-top: 1rem;
+            font-size: 0.8rem;
+            opacity: 0.7;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="offline-container">
+          <span class="fishing-icon">🎣</span>
+          <h1>Offline-Modus aktiv</h1>
+          <p>Du bist momentan nicht mit dem Internet verbunden, aber dein Fangkalender funktioniert weiterhin!</p>
+          
+          <div class="features">
+            <h3>✅ Verfügbare Funktionen:</h3>
+            <ul>
+              <li>Gespeicherte Fänge anzeigen & bearbeiten</li>
+              <li>Neue Fänge dokumentieren</li>
+              <li>Kalender durchsuchen</li>
+              <li>Persönliche Statistiken</li>
+              <li>Zuletzt geladene Wetterdaten</li>
+            </ul>
+          </div>
+          
+          <p><strong>⚠️ Eingeschränkt:</strong><br>
+          Aktuelle Wetterdaten und Bisswahrscheinlichkeiten können nicht aktualisiert werden.</p>
+          
+          <button onclick="window.location.reload()">
+            🔄 Verbindung erneut prüfen
+          </button>
+          
+          <div class="status">
+            PWA Version - Offline seit: <span id="offline-time"></span>
+          </div>
+        </div>
+        
+        <script>
+          document.getElementById('offline-time').textContent = new Date().toLocaleTimeString('de-DE');
+        </script>
+      </body>
+    </html>
+  `;
+  
+  return new Response(offlineHTML, {
+    headers: { 'Content-Type': 'text/html; charset=utf-8' }
+  });
+}
+
+// SVG Icon Placeholder Generator
+function createIconPlaceholder(iconUrl) {
+  const size = iconUrl.match(/(\d+)x\d+/)?.[1] || '192';
+  const isShortcut = iconUrl.includes('shortcut-');
+  
+  let iconContent = '🎣'; // Default fishing icon
+  if (iconUrl.includes('add-catch')) iconContent = '➕';
+  if (iconUrl.includes('forecast')) iconContent = '🌤️';
+  if (iconUrl.includes('stats')) iconContent = '📊';
+  
+  const svgIcon = `
+    <svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#0a1a2e"/>
+          <stop offset="100%" style="stop-color:#16213e"/>
+        </linearGradient>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#bg)" rx="${size/8}"/>
+      <text x="50%" y="50%" text-anchor="middle" dominant-baseline="central" 
+            font-size="${size/3}" font-family="system-ui">${iconContent}</text>
+    </svg>
+  `;
+  
+  return new Response(svgIcon, {
+    headers: { 
+      'Content-Type': 'image/svg+xml',
+      'Cache-Control': 'public, max-age=86400'
+    }
+  });
+}
+
+// Offline Wetter-Fallback
+function createOfflineWeatherResponse() {
+  const fallbackWeather = {
+    weather: [{ main: 'Unknown', description: 'Offline - Wetterdaten nicht verfügbar' }],
+    main: {
+      temp: null,
+      humidity: null, 
+      pressure: null
+    },
+    wind: { speed: null, deg: null },
+    offline: true,
+    message: 'Keine Internetverbindung - Verwende gespeicherte Daten oder plane mit Durchschnittswerten'
+  };
+  
+  return new Response(JSON.stringify(fallbackWeather), {
+    status: 503,
+    headers: { 
+      'Content-Type': 'application/json',
+      'X-Offline': 'true',
+      'X-Fishing-Advice': 'Nutze deine lokalen Erfahrungen und gespeicherten Fangdaten'
+    }
+  });
+}
+
+// Background Sync für Wetterdaten-Updates
+self.addEventListener('sync', event => {
+  if (event.tag === 'sync-weather-data') {
+    event.waitUntil(syncWeatherData());
+  }
+  
+  if (event.tag === 'sync-catch-photos') {
+    event.waitUntil(syncCatchPhotos());
+  }
+});
+
+async function syncWeatherData() {
+  console.log('🌤️ Background Sync: Wetterdaten aktualisieren');
+  // Implementierung für automatische Wetterdaten-Updates
+}
+
+async function syncCatchPhotos() {
+  console.log('📸 Background Sync: Fang-Fotos hochladen');
+  // Implementierung für automatisches Foto-Backup
+}
+
+// Push Notifications für Bisswahrscheinlichkeits-Alerts
+self.addEventListener('push', event => {
+  if (event.data) {
+    const data = event.data.json();
+    
+    if (data.type === 'bite-probability-alert') {
+      const options = {
+        body: `${data.fishType}: ${data.probability}% Bisswahrscheinlichkeit. ${data.message}`,
+        icon: '/PWA/images/icon-192x192.png',
+        badge: '/PWA/images/icon-72x72.png',
+        tag: 'bite-alert',
+        data: data,
+        actions: [
+          {
+            action: 'view-details',
+            title: 'Details ansehen',
+            icon: '/PWA/images/shortcut-forecast.png'
+          },
+          {
+            action: 'dismiss',
+            title: 'Später'
+          }
+        ]
+      };
+      
+      event.waitUntil(
+        self.registration.showNotification('🎣 Optimale Angelzeit!', options)
+      );
+    }
+  }
+});
+
+// Notification Click Handler
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  
+  if (event.action === 'view-details') {
+    event.waitUntil(
+      clients.openWindow('/PWA/index.html?action=today-forecast')
+    );
+  }
+});
+
+console.log('🎣 Fangkalender ServiceWorker geladen - Bereit für wissenschaftliches Angeln!');
