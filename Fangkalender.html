@@ -2727,7 +2727,15 @@ function setupEventListeners() {
     });
     // Setzt die aktuelle Zeit für das Fang-Modal standardmäßig, wenn es nicht zum Bearbeiten geöffnet wird
     if (!document.getElementById('editingCatchIdStore').value) {
-         document.getElementById('catchDate').value = new Date().toISOString().slice(0, 16);
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+        document.getElementById('catchDate').value = localDateTimeString;
     }
 }
 
@@ -2957,7 +2965,14 @@ function openCatchModal(catchIdToEdit = null) {
         isEditingCatch = false;
         document.getElementById('editingCatchIdStore').value = '';
         title.textContent = "Fang dokumentieren";
-        catchDateInput.value = new Date().toISOString().slice(0, 16); // Automatische Zeiterfassung
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+        catchDateInput.value = localDateTimeString; // Patched by new script logic
         document.getElementById('fishSizeSlider').value = 10; updateFishSizeDisplay(10);
         document.getElementById('fishWeightSlider').value = 500; updateFishWeightDisplay(500);
 
@@ -3009,7 +3024,14 @@ function resetCatchFormForNewEntry() {
     updateFishSizeDisplay(10);
     updateFishWeightDisplay(500);
     updateCatchBaitOptions('');
-    document.getElementById('catchDate').value = new Date().toISOString().slice(0, 16); // Immer aktuelle Zeit bei Reset
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+    document.getElementById('catchDate').value = localDateTimeString; // Patched by new script logic
     document.getElementById('catchForm').onsubmit = handleCatchSubmit;
 }
 function handleCatchSubmit(e) {
