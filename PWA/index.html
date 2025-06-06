@@ -5,12 +5,54 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dein Angelfreund</title>
+    <meta name="description" content="Wissenschaftlich fundierter Angel-Fangkalender mit Bisswahrscheinlichkeits-Algorithmus, Umweltdaten-Analyse und detaillierter Fangdokumentation für maximalen Fangerfolg.">
 
-    <!-- PWA Manifest and iOS specific tags -->
+    <!-- PWA Manifest -->
     <link rel="manifest" href="manifest.json">
+
+    <!-- Standard Favicon -->
+    <link rel="icon" type="image/png" sizes="32x32" href="images/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="images/icon-16x16.png">
+
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="images/icon-180x180.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="images/icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="images/icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="images/icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="images/icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="images/icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="images/icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="images/icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="images/icon-57x57.png">
+
+    <!-- Apple specific PWA meta tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Angelfreund">
+    <meta name="apple-mobile-web-app-title" content="Dein Angelfreund">
+
+    <!-- Microsoft specific -->
+    <meta name="msapplication-TileColor" content="#16213e">
+    <meta name="msapplication-TileImage" content="images/icon-144x144.png">
+    <meta name="msapplication-config" content="browserconfig.xml">
+
+    <!-- Theme color for browser UI -->
+    <meta name="theme-color" content="#16213e">
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#16213e">
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0a1a2e">
+
+    <!-- PWA Display -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Fangkalender">
+
+    <!-- Social Media / SEO -->
+    <meta property="og:title" content="Wissenschaftlicher Fangkalender">
+    <meta property="og:description" content="Dein digitaler Angelfreund mit wissenschaftlich fundierter Bisswahrscheinlichkeits-Analyse">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="images/icon-512x512.png">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Wissenschaftlicher Fangkalender">
+    <meta name="twitter:description" content="Dein digitaler Angelfreund für maximalen Fangerfolg">
+    <meta name="twitter:image" content="images/icon-512x512.png">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -1434,6 +1476,7 @@
                 content: '\2713'; /* Häkchen */
                 position: absolute; top: -0.1em; left: 0.1em; font-size: 1em; color: #333;
             }
+            .pwa-install-banner, .pwa-update-banner, .connection-status { display: none !important; }
         }
 
         /* Mobile Optimization */
@@ -1598,6 +1641,28 @@
     .pressure-trend i {
         font-size: 0.7rem;
     }
+
+    /* PWA Banners auf Mobile anpassen */
+    .pwa-install-banner, .pwa-update-banner {
+        left: 10px;
+        right: 10px;
+        bottom: 10px;
+    }
+
+    .pwa-install-content {
+        min-width: 0;
+    }
+
+    .pwa-install-actions {
+        flex-direction: column;
+        gap: 0.25rem;
+        min-width: 80px;
+    }
+
+    .pwa-install-btn {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.85rem;
+    }
 }
 
             .dashboard-grid {
@@ -1709,11 +1774,170 @@
                 grid-template-columns: 1fr;
             }
         }
+
+        /* PWA Installation Banner */
+        .pwa-install-banner {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: var(--primary-gradient);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            display: none;
+            z-index: 2000;
+            animation: slideUpFade 0.3s ease-out;
+        }
+
+        .pwa-install-banner.show {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .pwa-install-content {
+            flex: 1;
+        }
+
+        .pwa-install-title {
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .pwa-install-description {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .pwa-install-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pwa-install-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            white-space: nowrap;
+        }
+
+        .pwa-install-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .pwa-install-btn.primary {
+            background: rgba(255,255,255,0.9);
+            color: var(--primary-color, #40127c);
+            font-weight: bold;
+        }
+
+        /* Update Available Banner */
+        .pwa-update-banner {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            background: var(--warning-gradient);
+            color: white;
+            padding: 1rem;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-xl);
+            display: none;
+            z-index: 2000;
+            animation: slideDownFade 0.3s ease-out;
+        }
+
+        .pwa-update-banner.show {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        @keyframes slideUpFade {
+            from {
+                transform: translateY(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideDownFade {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Connection Status */
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--danger-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            display: none;
+            z-index: 1500;
+            animation: slideDownFade 0.3s ease-out;
+        }
+
+        .connection-status.offline {
+            display: block;
+        }
+
+        .connection-status.online {
+            background: var(--success-gradient);
+            display: block;
+        }
     </style>
 </head>
 <body>
+    <!-- Connection Status Indicator -->
+    <div class="connection-status" id="connectionStatus">
+        <i class="fas fa-wifi"></i> Offline
+    </div>
+
     <!-- Water Animation Background -->
     <div class="water-bg"></div>
+
+    <!-- PWA Install Banner -->
+    <div class="pwa-install-banner" id="pwaInstallBanner">
+        <div class="pwa-install-content">
+            <div class="pwa-install-title">App installieren</div>
+            <div class="pwa-install-description">Installiere den Fangkalender für bessere Performance und Offline-Nutzung</div>
+        </div>
+        <div class="pwa-install-actions">
+            <button class="pwa-install-btn primary" onclick="installPWA()">Installieren</button>
+            <button class="pwa-install-btn" onclick="dismissInstallBanner()">Später</button>
+        </div>
+    </div>
+
+    <!-- PWA Update Banner -->
+    <div class="pwa-update-banner" id="pwaUpdateBanner">
+        <div class="pwa-install-content">
+            <div class="pwa-install-title">Update verfügbar</div>
+            <div class="pwa-install-description">Eine neue Version der App ist verfügbar</div>
+        </div>
+        <div class="pwa-install-actions">
+            <button class="pwa-install-btn primary" onclick="updatePWA()">Aktualisieren</button>
+            <button class="pwa-install-btn" onclick="dismissUpdateBanner()">Später</button>
+        </div>
+    </div>
 
     <!-- Header -->
     <header>
@@ -2545,6 +2769,135 @@
     <!-- JavaScript -->
     <script>
 
+// PWA Variables and Functions
+let deferredPrompt;
+let newWorker;
+
+// PWA Functions
+function initializePWA() {
+    // Check for service worker support
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('service-worker.js') // MODIFIED HERE
+                .then(registration => {
+                    console.log('🎣 ServiceWorker registriert:', registration.scope);
+
+                    registration.addEventListener('updatefound', () => {
+                        newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateBanner();
+                            }
+                        });
+                    });
+                })
+                .catch(err => console.log('❌ ServiceWorker Registrierung fehlgeschlagen:', err));
+        });
+    }
+
+    // PWA Install Banner
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        showInstallBanner();
+    });
+
+    // Track when app was installed
+    window.addEventListener('appinstalled', (e) => {
+        console.log('🎣 Fangkalender PWA installiert');
+        hideInstallBanner();
+        localStorage.setItem('pwa_installed', 'true');
+    });
+
+    // Connection status
+    updateConnectionStatus();
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
+}
+
+function showInstallBanner() {
+    const banner = document.getElementById('pwaInstallBanner');
+    const isInstalled = localStorage.getItem('pwa_installed') === 'true';
+    const isDismissed = localStorage.getItem('pwa_install_dismissed') === 'true';
+
+    if (!isInstalled && !isDismissed && deferredPrompt && banner) { // Added banner null check
+        banner.classList.add('show');
+    }
+}
+
+function hideInstallBanner() {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) { // Added banner null check
+        banner.classList.remove('show');
+    }
+}
+
+function installPWA() {
+    if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('🎣 PWA Installation akzeptiert');
+            } else {
+                console.log('PWA Installation abgelehnt');
+            }
+            deferredPrompt = null;
+            hideInstallBanner();
+        });
+    }
+}
+
+function dismissInstallBanner() {
+    hideInstallBanner();
+    localStorage.setItem('pwa_install_dismissed', 'true');
+}
+
+function showUpdateBanner() {
+    const banner = document.getElementById('pwaUpdateBanner');
+    if (banner) { // Added banner null check
+        banner.classList.add('show');
+    }
+}
+
+function hideUpdateBanner() {
+    const banner = document.getElementById('pwaUpdateBanner');
+    if (banner) { // Added banner null check
+       banner.classList.remove('show');
+    }
+}
+
+function updatePWA() {
+    if (newWorker) {
+        newWorker.postMessage({ action: 'skipWaiting' });
+        // window.location.reload(); // Standard behavior is to reload after SW update.
+    }
+    // It's better to let the service worker handle the reload via clients.claim() and a message back if needed.
+    // Or, the user can manually reload when they see the "updated" state.
+    // Forcing a reload here can be disruptive.
+    // For now, just posting skipWaiting and hiding the banner.
+    hideUpdateBanner();
+}
+
+function dismissUpdateBanner() {
+    hideUpdateBanner();
+}
+
+function updateConnectionStatus() {
+    const statusEl = document.getElementById('connectionStatus');
+    if (!statusEl) return; // Added null check
+
+    if (navigator.onLine) {
+        statusEl.innerHTML = '<i class="fas fa-wifi"></i> Online';
+        statusEl.className = 'connection-status online';
+        setTimeout(() => {
+            statusEl.classList.remove('online');
+        }, 3000);
+    } else {
+        statusEl.innerHTML = '<i class="fas fa-wifi-slash"></i> Offline';
+        statusEl.className = 'connection-status offline';
+    }
+}
+
 // Enhanced Fish Database
 const fishDatabase = {
     pike: { name: 'Hecht', scientificName: 'Esox lucius', icon: '🦈', optimalTemp: { min: 8, max: 15 }, activeTemp: { min: 4, max: 20 }, optimalPressure: 'falling', pressureRange: { min: 1000, max: 1015 }, bestTimes: ['dawn', 'dusk'], bestMonths: [9, 10, 11, 3, 4, 5], moonPreference: 'full', weatherPreference: 'cloudy', windPreference: { min: 5, max: 15 }, cloudPreference: { min: 60, max: 90 }, behaviors: { spring: { activity: 0.8, depth: 'shallow', pattern: 'aggressive' }, summer: { activity: 0.5, depth: 'deep', pattern: 'ambush' }, autumn: { activity: 0.9, depth: 'medium', pattern: 'hunting' }, winter: { activity: 0.3, depth: 'deep', pattern: 'lethargic' } } },
@@ -2616,6 +2969,7 @@ baitOptionsByMethod[""] = [{value: "", text: "Erst Angelmethode wählen..."}]; /
 
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
+    initializePWA();
     initializeApp();
 });
 
@@ -4755,18 +5109,6 @@ function refreshProbabilities(event) { // event hinzugefügt
 
     </script>
     <script>
-    // PWA Service Worker Registration
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js') // Path relative to index.html
-          .then(registration => {
-            console.log('ServiceWorker registration successful with scope: ', registration.scope);
-          })
-          .catch(error => {
-            console.log('ServiceWorker registration failed: ', error);
-          });
-      });
-    }
     </script>
 </body>
 </html>
