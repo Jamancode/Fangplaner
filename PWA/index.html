@@ -1476,7 +1476,7 @@
                 content: '\2713'; /* Häkchen */
                 position: absolute; top: -0.1em; left: 0.1em; font-size: 1em; color: #333;
             }
-            .pwa-install-banner, .pwa-update-banner, .connection-status { display: none !important; }
+            .connection-status { display: none !important; }
         }
 
         /* Mobile Optimization */
@@ -1641,28 +1641,6 @@
     .pressure-trend i {
         font-size: 0.7rem;
     }
-
-    /* PWA Banners auf Mobile anpassen */
-    .pwa-install-banner, .pwa-update-banner {
-        left: 10px;
-        right: 10px;
-        bottom: 10px;
-    }
-
-    .pwa-install-content {
-        min-width: 0;
-    }
-
-    .pwa-install-actions {
-        flex-direction: column;
-        gap: 0.25rem;
-        min-width: 80px;
-    }
-
-    .pwa-install-btn {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.85rem;
-    }
 }
 
             .dashboard-grid {
@@ -1775,112 +1753,6 @@
             }
         }
 
-        /* PWA Installation Banner */
-        .pwa-install-banner {
-            position: fixed;
-            bottom: 20px;
-            left: 20px;
-            right: 20px;
-            background: var(--primary-gradient);
-            color: white;
-            padding: 1rem;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
-            display: none;
-            z-index: 2000;
-            animation: slideUpFade 0.3s ease-out;
-        }
-
-        .pwa-install-banner.show {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .pwa-install-content {
-            flex: 1;
-        }
-
-        .pwa-install-title {
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .pwa-install-description {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .pwa-install-actions {
-            display: flex;
-            gap: 0.5rem;
-        }
-
-        .pwa-install-btn {
-            background: rgba(255,255,255,0.2);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.3);
-            padding: 0.5rem 1rem;
-            border-radius: var(--radius-md);
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            white-space: nowrap;
-        }
-
-        .pwa-install-btn:hover {
-            background: rgba(255,255,255,0.3);
-        }
-
-        .pwa-install-btn.primary {
-            background: rgba(255,255,255,0.9);
-            color: var(--primary-color, #40127c);
-            font-weight: bold;
-        }
-
-        /* Update Available Banner */
-        .pwa-update-banner {
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            right: 20px;
-            background: var(--warning-gradient);
-            color: white;
-            padding: 1rem;
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-xl);
-            display: none;
-            z-index: 2000;
-            animation: slideDownFade 0.3s ease-out;
-        }
-
-        .pwa-update-banner.show {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        @keyframes slideUpFade {
-            from {
-                transform: translateY(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideDownFade {
-            from {
-                transform: translateY(-100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
         /* Connection Status */
         .connection-status {
             position: fixed;
@@ -1904,6 +1776,25 @@
             background: var(--success-gradient);
             display: block;
         }
+
+        #headerInstallBtn {
+            background: rgba(255, 255, 255, 0.15); /* Slightly more subtle than current inline */
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 0.4rem 0.8rem; /* Adjusted padding */
+            margin-left: 1rem;
+            vertical-align: middle;
+            border-radius: var(--radius-md); /* Use existing radius variable */
+            font-size: 0.9rem; /* Slightly smaller font */
+            transition: background-color var(--transition-fast), border-color var(--transition-fast);
+        }
+        #headerInstallBtn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: rgba(255, 255, 255, 0.4);
+        }
+        #headerInstallBtn i {
+            margin-right: 0.5rem;
+        }
     </style>
 </head>
 <body>
@@ -1915,34 +1806,11 @@
     <!-- Water Animation Background -->
     <div class="water-bg"></div>
 
-    <!-- PWA Install Banner -->
-    <div class="pwa-install-banner" id="pwaInstallBanner">
-        <div class="pwa-install-content">
-            <div class="pwa-install-title">App installieren</div>
-            <div class="pwa-install-description">Installiere den Fangkalender für bessere Performance und Offline-Nutzung</div>
-        </div>
-        <div class="pwa-install-actions">
-            <button class="pwa-install-btn primary" onclick="installPWA()">Installieren</button>
-            <button class="pwa-install-btn" onclick="dismissInstallBanner()">Später</button>
-        </div>
-    </div>
-
-    <!-- PWA Update Banner -->
-    <div class="pwa-update-banner" id="pwaUpdateBanner">
-        <div class="pwa-install-content">
-            <div class="pwa-install-title">Update verfügbar</div>
-            <div class="pwa-install-description">Eine neue Version der App ist verfügbar</div>
-        </div>
-        <div class="pwa-install-actions">
-            <button class="pwa-install-btn primary" onclick="updatePWA()">Aktualisieren</button>
-            <button class="pwa-install-btn" onclick="dismissUpdateBanner()">Später</button>
-        </div>
-    </div>
-
     <!-- Header -->
     <header>
         <div class="header-content">
             <h1><i class="fas fa-fish"></i> Dein Angelfreund </h1>
+            <button id="headerInstallBtn" class="btn btn-icon no-print" style="display: none; margin-left: 1rem; vertical-align: middle; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); padding: 0.5rem 0.75rem;" onclick="installPWA()"><i class="fas fa-download" style="margin-right: 0.5rem;"></i> Installieren</button>
             <div class="weather-widget" id="weatherWidget">
                 <div class="weather-item">
                     <i class="fas fa-temperature-high"></i>
@@ -2774,6 +2642,28 @@ let deferredPrompt;
 let newWorker;
 
 // PWA Functions
+function installPWA() {
+    const headerInstallBtn = document.getElementById('headerInstallBtn');
+    if (deferredPrompt && headerInstallBtn) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+            if (choiceResult.outcome === 'accepted') {
+                console.log('User accepted the PWA prompt');
+                localStorage.setItem('pwa_installed', 'true'); // Mark as installed
+                headerInstallBtn.style.display = 'none'; // Hide button after install
+            } else {
+                console.log('User dismissed the PWA prompt');
+            }
+            deferredPrompt = null; // We can only use it once.
+        });
+    } else if (headerInstallBtn) {
+        // If deferredPrompt is null, maybe the button shouldn't have been visible
+        // or the prompt was already used. Hide it to prevent confusion.
+        console.log('Install prompt not available or already used.');
+        headerInstallBtn.style.display = 'none';
+    }
+}
+
 function initializePWA() {
     // Check for service worker support
     if ('serviceWorker' in navigator) {
@@ -2799,13 +2689,21 @@ function initializePWA() {
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        showInstallBanner();
+        // showInstallBanner(); // Removed: Banner will be replaced by header button
+        const headerInstallBtn = document.getElementById('headerInstallBtn');
+        if (headerInstallBtn && localStorage.getItem('pwa_installed') !== 'true') {
+            headerInstallBtn.style.display = 'inline-flex';
+        }
     });
 
     // Track when app was installed
     window.addEventListener('appinstalled', (e) => {
         console.log('🎣 Fangkalender PWA installiert');
-        hideInstallBanner();
+        // hideInstallBanner(); // Old banner function, no longer needed
+        const headerInstallBtn = document.getElementById('headerInstallBtn');
+        if (headerInstallBtn) {
+            headerInstallBtn.style.display = 'none';
+        }
         localStorage.setItem('pwa_installed', 'true');
     });
 
@@ -2813,74 +2711,24 @@ function initializePWA() {
     updateConnectionStatus();
     window.addEventListener('online', updateConnectionStatus);
     window.addEventListener('offline', updateConnectionStatus);
-}
 
-function showInstallBanner() {
-    const banner = document.getElementById('pwaInstallBanner');
-    const isInstalled = localStorage.getItem('pwa_installed') === 'true';
-    const isDismissed = localStorage.getItem('pwa_install_dismissed') === 'true';
-
-    if (!isInstalled && !isDismissed && deferredPrompt && banner) { // Added banner null check
-        banner.classList.add('show');
+    // Hide header install button if already installed
+    if (localStorage.getItem('pwa_installed') === 'true') {
+        const headerInstallBtn = document.getElementById('headerInstallBtn');
+        if (headerInstallBtn) {
+            headerInstallBtn.style.display = 'none';
+        }
     }
 }
 
-function hideInstallBanner() {
-    const banner = document.getElementById('pwaInstallBanner');
-    if (banner) { // Added banner null check
-        banner.classList.remove('show');
-    }
-}
-
-function installPWA() {
-    if (deferredPrompt) {
-        deferredPrompt.prompt();
-        deferredPrompt.userChoice.then((choiceResult) => {
-            if (choiceResult.outcome === 'accepted') {
-                console.log('🎣 PWA Installation akzeptiert');
-            } else {
-                console.log('PWA Installation abgelehnt');
-            }
-            deferredPrompt = null;
-            hideInstallBanner();
-        });
-    }
-}
-
-function dismissInstallBanner() {
-    hideInstallBanner();
-    localStorage.setItem('pwa_install_dismissed', 'true');
-}
-
-function showUpdateBanner() {
-    const banner = document.getElementById('pwaUpdateBanner');
-    if (banner) { // Added banner null check
-        banner.classList.add('show');
-    }
-}
-
-function hideUpdateBanner() {
-    const banner = document.getElementById('pwaUpdateBanner');
-    if (banner) { // Added banner null check
-       banner.classList.remove('show');
-    }
-}
-
-function updatePWA() {
-    if (newWorker) {
-        newWorker.postMessage({ action: 'skipWaiting' });
-        // window.location.reload(); // Standard behavior is to reload after SW update.
-    }
-    // It's better to let the service worker handle the reload via clients.claim() and a message back if needed.
-    // Or, the user can manually reload when they see the "updated" state.
-    // Forcing a reload here can be disruptive.
-    // For now, just posting skipWaiting and hiding the banner.
-    hideUpdateBanner();
-}
-
-function dismissUpdateBanner() {
-    hideUpdateBanner();
-}
+// Removed: showInstallBanner()
+// Removed: hideInstallBanner()
+// Removed: installPWA() - will be replaced by header button logic (now re-added above)
+// Removed: dismissInstallBanner()
+// Removed: showUpdateBanner()
+// Removed: hideUpdateBanner()
+// Removed: updatePWA()
+// Removed: dismissUpdateBanner()
 
 function updateConnectionStatus() {
     const statusEl = document.getElementById('connectionStatus');
