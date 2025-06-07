@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <title>Icon Generator für Angelfreund PWA</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        h1 {
+            color: #40127c;
+            margin-bottom: 10px;
+        }
+        .instructions {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .icons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .icon-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        canvas {
+            border: 1px solid #ddd;
+            margin: 10px 0;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .download-btn {
+            background: #40127c;
+            color: white;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .download-btn:hover {
+            background: #2a0853;
+        }
+        .batch-download {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        code {
+            background: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎣 Icon Generator für Angelfreund PWA</h1>
+
+    <div class="instructions">
+        <h2>Anleitung</h2>
+        <p>Diese Seite generiert alle benötigten Icons für Ihre PWA. Die Icons werden mit einem Fisch-Symbol auf einem Verlaufshintergrund erstellt.</p>
+        <ol>
+            <li>Klicken Sie bei jedem Icon auf "Download", um es herunterzuladen</li>
+            <li>Erstellen Sie einen Ordner <code>images/</code> in Ihrem GitHub Repository</li>
+            <li>Laden Sie alle Icons in diesen Ordner hoch</li>
+            <li>Die Dateinamen müssen exakt wie angegeben sein (z.B. <code>icon-192x192.png</code>)</li>
+        </ol>
+    </div>
+
+    <div class="icons-grid" id="iconsGrid">
+        <!-- Icons werden hier eingefügt -->
+    </div>
+
+    <div class="batch-download">
+        <h3>Alle Icons generiert!</h3>
+        <p>Vergessen Sie nicht, den <code>images/</code> Ordner in Ihrem Repository zu erstellen und alle Icons hochzuladen.</p>
+    </div>
+
+    <script>
+        // Icon-Größen die benötigt werden
+        const iconSizes = [
+            { size: 16, name: 'Favicon klein' },
+            { size: 32, name: 'Favicon groß' },
+            { size: 72, name: 'Android klein' },
+            { size: 96, name: 'Android/Shortcuts' },
+            { size: 128, name: 'Chrome Web Store' },
+            { size: 144, name: 'Android mittel' },
+            { size: 152, name: 'iOS iPad' },
+            { size: 180, name: 'iOS iPhone' },
+            { size: 192, name: 'Android groß' },
+            { size: 384, name: 'Android extra groß' },
+            { size: 512, name: 'Android splash screen' }
+        ];
+
+        function createIcon(size, name) {
+            // Container erstellen
+            const container = document.createElement('div');
+            container.className = 'icon-container';
+
+            // Canvas erstellen
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+            const ctx = canvas.getContext('2d');
+
+            // Gradient Hintergrund
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#40127c');
+            gradient.addColorStop(1, '#1a0129');
+            ctx.fillStyle = gradient;
+
+            // Abgerundetes Rechteck für iOS
+            const radius = size * 0.15;
+            ctx.beginPath();
+            ctx.moveTo(radius, 0);
+            ctx.lineTo(size - radius, 0);
+            ctx.quadraticCurveTo(size, 0, size, radius);
+            ctx.lineTo(size, size - radius);
+            ctx.quadraticCurveTo(size, size, size - radius, size);
+            ctx.lineTo(radius, size);
+            ctx.quadraticCurveTo(0, size, 0, size - radius);
+            ctx.lineTo(0, radius);
+            ctx.quadraticCurveTo(0, 0, radius, 0);
+            ctx.closePath();
+            ctx.fill();
+
+            // Weißer Kreis in der Mitte
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Fisch Symbol
+            ctx.font = `${size * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'white';
+            ctx.fillText('🎣', size / 2, size / 2);
+
+            // Titel
+            const title = document.createElement('h3');
+            title.textContent = `${size}x${size}px`;
+            container.appendChild(title);
+
+            // Beschreibung
+            const desc = document.createElement('p');
+            desc.textContent = name;
+            desc.style.fontSize = '0.9em';
+            desc.style.color = '#666';
+            container.appendChild(desc);
+
+            // Canvas hinzufügen
+            container.appendChild(canvas);
+
+            // Download Button
+            const downloadBtn = document.createElement('a');
+            downloadBtn.className = 'download-btn';
+            downloadBtn.textContent = 'Download';
+            downloadBtn.download = `icon-${size}x${size}.png`;
+
+            // Canvas zu Data URL konvertieren
+            canvas.toBlob(blob => {
+                const url = URL.createObjectURL(blob);
+                downloadBtn.href = url;
+            });
+
+            container.appendChild(downloadBtn);
+
+            return container;
+        }
+
+        // Alle Icons generieren
+        const grid = document.getElementById('iconsGrid');
+        iconSizes.forEach(({ size, name }) => {
+            const iconElement = createIcon(size, name);
+            grid.appendChild(iconElement);
+        });
+    </script>
+</body>
+</html>
