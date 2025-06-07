@@ -1,6 +1,7 @@
 const CACHE_NAME = 'fangkalender-pwa-cache-v1';
 const STATIC_CACHE = 'fangkalender-static-v1';
 const API_CACHE = 'fangkalender-api-v1';
+const CDN_CACHE = 'fangkalender-cdn-v1';
 
 // Kernressourcen die IMMER verfügbar sein müssen
 const CRITICAL_RESOURCES = [
@@ -48,7 +49,7 @@ self.addEventListener('activate', event => {
       caches.keys().then(cacheNames => {
         return Promise.all(
           cacheNames.map(cache => {
-            if (![STATIC_CACHE, API_CACHE].includes(cache)) {
+            if (![STATIC_CACHE, API_CACHE, CDN_CACHE].includes(cache)) {
               console.log('ServiceWorker: Deleting old cache:', cache);
               return caches.delete(cache);
             }
@@ -63,30 +64,52 @@ self.addEventListener('activate', event => {
 
 // Fetch: Intelligente Cache-Strategien
 self.addEventListener('fetch', event => {
-  const url = new URL(event.request.url);
-  
-  // Statische Ressourcen: Cache First
-  if (event.request.destination === 'document' || 
-      event.request.destination === 'script' || 
-      event.request.destination === 'style' ||
-      event.request.destination === 'image') {
+    const url = new URL(event.request.url);
+
+    // Handle CDN assets: Cache First, then Network
+    if (url.hostname === 'cdnjs.cloudflare.com' || url.hostname === 'unpkg.com') {
+        event.respondWith(
+            caches.open(CDN_CACHE).then(cache => {
+                return cache.match(event.request).then(cachedResponse => {
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    return fetch(event.request).then(networkResponse => {
+                        if (networkResponse && networkResponse.status === 200) {
+                            cache.put(event.request, networkResponse.clone());
+                        }
+                        return networkResponse;
+                    }).catch(err => {
+                        console.error('ServiceWorker: CDN fetch failed, request:', event.request.url, err);
+                        // Optionally, return a generic offline response or rethrow
+                    });
+                });
+            })
+        );
+        return; // Important to return after handling the CDN request
+    }
+
+    // Existing logic for static resources (documents, scripts, styles, images)
+    if (event.request.destination === 'document' ||
+        event.request.destination === 'script' ||
+        event.request.destination === 'style' ||
+        event.request.destination === 'image') {
+        event.respondWith(handleStaticResource(event.request));
+        return;
+    }
     
-    event.respondWith(handleStaticResource(event.request));
-    return;
-  }
-  
-  // API-Calls: Network First mit Cache Fallback + Stale-While-Revalidate
-  if (API_PATTERNS.some(pattern => pattern.test(url.href))) {
-    event.respondWith(handleAPIRequest(event.request));
-    return;
-  }
-  
-  // Alles andere: Network First
-  event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
-  );
+    // Existing logic for API calls
+    if (API_PATTERNS.some(pattern => pattern.test(url.href))) {
+        event.respondWith(handleAPIRequest(event.request));
+        return;
+    }
+
+    // Default: Network First for everything else
+    event.respondWith(
+        fetch(event.request).catch(() => {
+            return caches.match(event.request);
+        })
+    );
 });
 
 // Cache First für statische Inhalte
