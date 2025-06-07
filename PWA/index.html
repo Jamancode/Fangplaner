@@ -2637,14 +2637,16 @@ let newWorker;
 
 // PWA Functions
 function installPWA() {
+    console.log('[PWA Debug] installPWA() called. deferredPrompt:', deferredPrompt);
     const settingsInstallBtn = document.getElementById('settingsInstallBtn');
     const btnText = settingsInstallBtn ? settingsInstallBtn.querySelector('.btn-text') : null;
     const loadingSpinner = settingsInstallBtn ? settingsInstallBtn.querySelector('.loading-spinner') : null;
     const installStatusMsg = document.getElementById('installStatusMsg');
 
     if (!deferredPrompt) {
-        if (installStatusMsg) installStatusMsg.textContent = "Installation nicht möglich (kein Installations-Ereignis verfügbar oder bereits verwendet).";
-        if (settingsInstallBtn) settingsInstallBtn.style.display = 'none'; // Hide if prompt not available
+        console.log('[PWA Debug] installPWA: deferredPrompt is null. Cannot prompt.');
+        if (installStatusMsg) installStatusMsg.textContent = "Installation derzeit nicht möglich (Browser-Event nicht verfügbar oder bereits verwendet).";
+        if (settingsInstallBtn) settingsInstallBtn.disabled = true; // Keep visible but disabled
         return;
     }
 
@@ -2653,25 +2655,26 @@ function installPWA() {
     if (loadingSpinner) loadingSpinner.style.display = 'inline-block';
     if (installStatusMsg) installStatusMsg.textContent = "Installation wird gestartet...";
 
+    console.log('[PWA Debug] Calling deferredPrompt.prompt()');
     deferredPrompt.prompt();
     deferredPrompt.userChoice.then((choiceResult) => {
-        if (settingsInstallBtn) settingsInstallBtn.disabled = false; // Re-enable button initially
+        console.log('[PWA Debug] userChoice outcome:', choiceResult.outcome);
+        if (settingsInstallBtn) settingsInstallBtn.disabled = false;
         if (btnText) btnText.style.display = 'inline-block';
         if (loadingSpinner) loadingSpinner.style.display = 'none';
 
         if (choiceResult.outcome === 'accepted') {
             if (installStatusMsg) installStatusMsg.textContent = "App-Installation akzeptiert. Abschluss durch System...";
-            // The 'appinstalled' event will handle final state update (hiding button, 'installed' message)
-        } else {
-            if (installStatusMsg) installStatusMsg.textContent = "Installation abgelehnt oder abgebrochen. Du kannst es später erneut versuchen.";
-            // Keep button visible if dismissed, so user can try again (if prompt is somehow re-acquired, though typically not for same event)
-            // However, deferredPrompt is now null, so a subsequent click would hit the !deferredPrompt check.
+            // The 'appinstalled' event will handle final state update.
+        } else { // outcome === 'dismissed'
+            if (installStatusMsg) installStatusMsg.textContent = "Installation abgelehnt. Button wird ausgeblendet.";
+            if (settingsInstallBtn) settingsInstallBtn.style.display = 'none'; // Hide if dismissed, as prompt is consumed.
         }
         deferredPrompt = null; // Prompt can only be used once
     }).catch((err) => {
-        console.error('Error during PWA installation prompt:', err);
+        console.error('[PWA Debug] Error in installPWA userChoice:', err);
         if (installStatusMsg) installStatusMsg.textContent = "Fehler während der Installation: " + err.message;
-        if (settingsInstallBtn) {
+        if (settingsInstallBtn) { // Reset button state on error
             settingsInstallBtn.disabled = false;
             if (btnText) btnText.style.display = 'inline-block';
             if (loadingSpinner) loadingSpinner.style.display = 'none';
@@ -2680,10 +2683,12 @@ function installPWA() {
 }
 
 function initializePWA() {
+    console.log('[PWA Debug] initializePWA started.');
     const settingsInstallBtn = document.getElementById('settingsInstallBtn');
     const btnText = settingsInstallBtn ? settingsInstallBtn.querySelector('.btn-text') : null;
     const loadingSpinner = settingsInstallBtn ? settingsInstallBtn.querySelector('.loading-spinner') : null;
     const installStatusMsg = document.getElementById('installStatusMsg');
+    console.log('[PWA Debug] settingsInstallBtn:', settingsInstallBtn, 'installStatusMsg:', installStatusMsg);
 
     // Check for service worker support
     if ('serviceWorker' in navigator) {
@@ -2707,22 +2712,27 @@ function initializePWA() {
 
     // PWA Install Banner
     window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('[PWA Debug] beforeinstallprompt event fired!');
         e.preventDefault();
         deferredPrompt = e;
-        const settingsInstallBtn = document.getElementById('settingsInstallBtn');
-        const installStatusMsg = document.getElementById('installStatusMsg');
+        console.log('[PWA Debug] deferredPrompt captured:', deferredPrompt);
+        console.log('[PWA Debug] localStorage pwa_installed:', localStorage.getItem('pwa_installed'));
+        const settingsInstallBtn = document.getElementById('settingsInstallBtn'); // Get fresh reference
+        const installStatusMsg = document.getElementById('installStatusMsg'); // Get fresh reference
 
         if (localStorage.getItem('pwa_installed') !== 'true') {
+            console.log('[PWA Debug] Attempting to show settingsInstallBtn. Button ref:', settingsInstallBtn);
             if (settingsInstallBtn) {
-                settingsInstallBtn.style.display = 'inline-block'; // Or 'block'
+                settingsInstallBtn.style.display = 'inline-block';
+                settingsInstallBtn.disabled = false;
                 const btnTextSpan = settingsInstallBtn.querySelector('.btn-text');
                 const loadingSpinnerSpan = settingsInstallBtn.querySelector('.loading-spinner');
-                if(btnTextSpan) btnTextSpan.style.display = 'inline-block'; // Ensure text is visible
-                if(loadingSpinnerSpan) loadingSpinnerSpan.style.display = 'none'; // Ensure spinner is hidden
-                settingsInstallBtn.disabled = false;
+                if(btnTextSpan) btnTextSpan.style.display = 'inline-block';
+                if(loadingSpinnerSpan) loadingSpinnerSpan.style.display = 'none';
             }
-            if (installStatusMsg) installStatusMsg.textContent = "App jetzt installieren, um sie offline zu nutzen.";
+            if (installStatusMsg) installStatusMsg.textContent = "Bereit zum Installieren!";
         } else {
+            console.log('[PWA Debug] beforeinstallprompt: App already installed, ensuring button is hidden. Button ref:', settingsInstallBtn);
             if (settingsInstallBtn) settingsInstallBtn.style.display = 'none';
             if (installStatusMsg) installStatusMsg.textContent = "App ist bereits installiert.";
         }
@@ -2730,9 +2740,10 @@ function initializePWA() {
 
     // Track when app was installed
     window.addEventListener('appinstalled', (e) => {
+        console.log('[PWA Debug] appinstalled event fired.');
         console.log('🎣 Fangkalender PWA installiert');
         localStorage.setItem('pwa_installed', 'true');
-        const settingsInstallBtn = document.getElementById('settingsInstallBtn');
+        const settingsInstallBtn = document.getElementById('settingsInstallBtn'); // Get fresh reference
         if (settingsInstallBtn) {
             settingsInstallBtn.style.display = 'none';
         }
@@ -2751,15 +2762,13 @@ function initializePWA() {
 
     // Initial state for settings tab install button/message
     if (localStorage.getItem('pwa_installed') === 'true') {
+        console.log('[PWA Debug] App already installed (localStorage). Hiding button.');
         if (installStatusMsg) installStatusMsg.textContent = "App ist bereits auf diesem Gerät installiert.";
         if (settingsInstallBtn) settingsInstallBtn.style.display = 'none';
     } else {
-        // If not installed, set a generic message. Button visibility handled by beforeinstallprompt.
+        console.log('[PWA Debug] App not installed (localStorage). Initial status message set. Button hidden until beforeinstallprompt.');
         if (installStatusMsg) installStatusMsg.textContent = "Installiere die App für Offline-Nutzung und schnellen Zugriff.";
-        // Ensure button is hidden by default if beforeinstallprompt hasn't fired yet
-        if (settingsInstallBtn && !deferredPrompt) { // Check if deferredPrompt is not yet available
-             settingsInstallBtn.style.display = 'none';
-        }
+        if (settingsInstallBtn) settingsInstallBtn.style.display = 'none'; // Hide by default, beforeinstallprompt will show it
     }
 }
 
