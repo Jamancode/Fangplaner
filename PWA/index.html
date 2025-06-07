@@ -1544,6 +1544,23 @@
     .pressure-trend i {
         font-size: 0.8rem;
     }
+
+    #headerInstallBtn {
+        margin-left: 0; /* Remove left margin as header content is column */
+        margin-top: 0.75rem; /* Add space as it's on a new line below title */
+        /* order: 2; Not strictly needed due to HTML source order */
+        align-self: center; /* Center button in the column flow */
+        padding: 0.5rem 1rem; /* Ensure tappable size */
+        font-size: 0.9rem; /* Ensure readable font */
+        width: auto; /* Allow it to size based on content */
+        max-width: 250px; /* Prevent it from being overly wide */
+    }
+
+    .connection-status {
+        margin-left: 0; /* Align with other centered column items */
+        margin-top: 0.5rem; /* Consistent spacing */
+        /* align-self: center; is already in the general rule and correct */
+    }
 }
 
 /* Für kleinere Bildschirme - kleinere Schrift, aber alles sichtbar */
@@ -1755,17 +1772,17 @@
 
         /* Connection Status */
         .connection-status {
-            position: fixed;
-            top: 10px;
-            right: 10px;
+            /* Existing styles like background, color, padding, border-radius, font-size, animation can remain */
             background: var(--danger-gradient);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: var(--radius-md);
             font-size: 0.8rem;
-            display: none;
-            z-index: 1500;
+            display: none; /* This is its default state, JS controls visibility via .online/.offline */
             animation: slideDownFade 0.3s ease-out;
+            /* New/Modified styles for header integration: */
+            align-self: center; /* Align with other items in flex container */
+            margin-left: 1rem;  /* Add some space from the weather widget */
         }
 
         .connection-status.offline {
@@ -1798,11 +1815,6 @@
     </style>
 </head>
 <body>
-    <!-- Connection Status Indicator -->
-    <div class="connection-status" id="connectionStatus">
-        <i class="fas fa-wifi"></i> Offline
-    </div>
-
     <!-- Water Animation Background -->
     <div class="water-bg"></div>
 
@@ -1829,6 +1841,10 @@
                     <i class="fas fa-moon"></i>
                     <span id="moonPhase">--</span>
                 </div>
+            </div>
+            <!-- Connection Status Indicator -->
+            <div class="connection-status" id="connectionStatus">
+                <i class="fas fa-wifi"></i> Offline
             </div>
         </div>
     </header>
