@@ -38,86 +38,56 @@
 
   "icons": [
     {
-      "src": "images/icon-144x144.png",
+      "src": "icons/icon-16x16.png",
       "type": "image/png",
-      "sizes": "144x144",
+      "sizes": "16x16",
       "purpose": "any"
     },
     {
-      "src": "images/icon-152x152.png",
+      "src": "icons/icon-32x32.png",
       "type": "image/png",
-      "sizes": "152x152",
+      "sizes": "32x32",
       "purpose": "any"
     },
     {
-      "src": "images/icon-192x192.png",
+      "src": "icons/icon-72x72.png",
       "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any"
-    },
-    {
-      "src": "images/icon-384x384.png",
-      "type": "image/png",
-      "sizes": "384x384",
-      "purpose": "any"
-    },
-    {
-      "src": "images/icon-512x512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any"
-    },
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Crect width='48' height='48' fill='%2316213e' rx='8'/%3E%3Ctext x='24' y='32' font-size='20' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
-      "sizes": "48x48",
-      "purpose": "any"
-    },
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 72 72'%3E%3Crect width='72' height='72' fill='%2316213e' rx='12'/%3E%3Ctext x='36' y='48' font-size='32' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
       "sizes": "72x72",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'%3E%3Crect width='96' height='96' fill='%2316213e' rx='16'/%3E%3Ctext x='48' y='64' font-size='40' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
+      "src": "icons/icon-96x96.png",
+      "type": "image/png",
       "sizes": "96x96",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Crect width='128' height='128' fill='%2316213e' rx='20'/%3E%3Ctext x='64' y='84' font-size='56' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
-      "sizes": "128x128",
-      "purpose": "any"
-    },
-    {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 144 144'%3E%3Crect width='144' height='144' fill='%2316213e' rx='24'/%3E%3Ctext x='72' y='96' font-size='64' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
+      "src": "icons/icon-144x144.png",
+      "type": "image/png",
       "sizes": "144x144",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 152 152'%3E%3Crect width='152' height='152' fill='%2316213e' rx='24'/%3E%3Ctext x='76' y='100' font-size='68' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
+      "src": "icons/icon-152x152.png",
+      "type": "image/png",
       "sizes": "152x152",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Cdefs%3E%3ClinearGradient id='grad1' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2340127c'/%3E%3Cstop offset='100%25' stop-color='%231a0129'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='192' height='192' fill='url(%23grad1)' rx='32'/%3E%3Ctext x='96' y='128' font-size='84' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
+      "src": "icons/icon-192x192.png",
+      "type": "image/png",
       "sizes": "192x192",
       "purpose": "any maskable"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 384 384'%3E%3Cdefs%3E%3ClinearGradient id='grad2' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2340127c'/%3E%3Cstop offset='100%25' stop-color='%231a0129'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='384' height='384' fill='url(%23grad2)' rx='64'/%3E%3Ctext x='192' y='256' font-size='168' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
+      "src": "icons/icon-384x384.png",
+      "type": "image/png",
       "sizes": "384x384",
       "purpose": "any"
     },
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='grad3' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0%25' stop-color='%2340127c'/%3E%3Cstop offset='100%25' stop-color='%231a0129'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' fill='url(%23grad3)' rx='85'/%3E%3Ctext x='256' y='340' font-size='224' text-anchor='middle' fill='white'%3E🎣%3C/text%3E%3C/svg%3E",
-      "type": "image/svg+xml",
+      "src": "icons/icon-512x512.png",
+      "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
