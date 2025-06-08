@@ -5,6 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dein Angelfreund</title>
+
+    <!-- PWA Manifest and iOS specific tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Angelfreund">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -219,6 +226,9 @@
             max-height: 500px; /* Oder ein anderer passender Wert */
             padding-top: 1rem;
             overflow-y: auto; /* Falls Inhalt größer ist */
+        }
+        #catchMapSidebar .collapsible-content.open {
+            max-height: none; /* Allow full content height, sidebar will scroll */
         }
         .collapsible-header .fa-chevron-down {
             transition: transform 0.3s ease-out;
@@ -1394,6 +1404,28 @@
             flex-grow: 1;
         }
 
+        /* Connection Status */
+        .connection-status {
+            background: var(--danger-gradient);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.8rem;
+            display: none; /* Default state, JS controls visibility */
+            animation: slideDownFade 0.3s ease-out;
+            align-self: center;
+            margin-left: 1rem;
+        }
+
+        .connection-status.offline {
+            display: block; /* Show when offline */
+        }
+
+        .connection-status.online {
+            background: var(--success-gradient);
+            display: block; /* Show briefly when online */
+        }
+
 
         /* Print Styles */
         @media print {
@@ -1427,6 +1459,7 @@
                 content: '\2713'; /* Häkchen */
                 position: absolute; top: -0.1em; left: 0.1em; font-size: 1em; color: #333;
             }
+            .connection-status { display: none !important; }
         }
 
         /* Mobile Optimization */
@@ -1647,6 +1680,7 @@
                 width: 180px; /* Schmalere Sidebar auf Mobile */
                 padding: 0.5rem;
                 flex-shrink: 0; /* Verhindert Schrumpfen der Sidebar */
+                overflow-y: auto; /* Allow sidebar to scroll its own content */
                  /* Einklapp-Logik wird in JS gesteuert, display: none; wenn eingeklappt */
             }
             #catchLocationMapModal #catchMapSidebar.collapsed {
@@ -1731,6 +1765,13 @@
                     <span id="moonPhase">--</span>
                 </div>
             </div>
+            <!-- Connection Status Indicator -->
+            <div class="connection-status" id="connectionStatus">
+                <i class="fas fa-wifi"></i> Offline
+            </div>
+            <button id="installPwaButton" class="btn" style="display: none; margin-left: 1rem;">
+                <i class="fas fa-download"></i> App installieren
+            </button>
         </div>
     </header>
 
@@ -2612,6 +2653,28 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
 
+function updateConnectionStatus() {
+    const statusEl = document.getElementById('connectionStatus');
+    if (!statusEl) return;
+
+    if (navigator.onLine) {
+        statusEl.innerHTML = '<i class="fas fa-wifi"></i> Online';
+        statusEl.className = 'connection-status online';
+        statusEl.style.display = 'block'; // Make sure it's visible for the brief "online" message
+        setTimeout(() => {
+            // Only hide if it's still in the 'online' temporary display state
+            if (statusEl.classList.contains('online')) {
+                statusEl.style.display = 'none';
+                statusEl.classList.remove('online'); // Reset class
+            }
+        }, 3000);
+    } else {
+        statusEl.innerHTML = '<i class="fas fa-wifi-slash"></i> Offline';
+        statusEl.className = 'connection-status offline';
+        statusEl.style.display = 'block'; // Ensure it's visible when offline
+    }
+}
+
 function initializeApp() {
     loadApiKey();
     loadData();
@@ -2644,6 +2707,11 @@ function initializeApp() {
     updateFishWeightDisplay(document.getElementById('fishWeightSlider').value);
     updatePlannedDurationDisplay(document.getElementById('plannedDurationSlider').value);
     updateGewaesserDepthDisplay(document.getElementById('gewaesserDepthSlider').value);
+
+    // Connection status
+    updateConnectionStatus(); // Initial check
+    window.addEventListener('online', updateConnectionStatus);
+    window.addEventListener('offline', updateConnectionStatus);
 }
 function colorToRgb(colorString) {
     if (!colorString) return '255,255,255'; // Fallback
@@ -2727,7 +2795,15 @@ function setupEventListeners() {
     });
     // Setzt die aktuelle Zeit für das Fang-Modal standardmäßig, wenn es nicht zum Bearbeiten geöffnet wird
     if (!document.getElementById('editingCatchIdStore').value) {
-         document.getElementById('catchDate').value = new Date().toISOString().slice(0, 16);
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+        document.getElementById('catchDate').value = localDateTimeString;
     }
 }
 
@@ -2957,7 +3033,14 @@ function openCatchModal(catchIdToEdit = null) {
         isEditingCatch = false;
         document.getElementById('editingCatchIdStore').value = '';
         title.textContent = "Fang dokumentieren";
-        catchDateInput.value = new Date().toISOString().slice(0, 16); // Automatische Zeiterfassung
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = (now.getMonth() + 1).toString().padStart(2, '0');
+        const day = now.getDate().toString().padStart(2, '0');
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+        catchDateInput.value = localDateTimeString; // Patched by new script logic
         document.getElementById('fishSizeSlider').value = 10; updateFishSizeDisplay(10);
         document.getElementById('fishWeightSlider').value = 500; updateFishWeightDisplay(500);
 
@@ -3009,7 +3092,14 @@ function resetCatchFormForNewEntry() {
     updateFishSizeDisplay(10);
     updateFishWeightDisplay(500);
     updateCatchBaitOptions('');
-    document.getElementById('catchDate').value = new Date().toISOString().slice(0, 16); // Immer aktuelle Zeit bei Reset
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+    const day = now.getDate().toString().padStart(2, '0');
+    const hours = now.getHours().toString().padStart(2, '0');
+    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const localDateTimeString = `${year}-${month}-${day}T${hours}:${minutes}`;
+    document.getElementById('catchDate').value = localDateTimeString; // Patched by new script logic
     document.getElementById('catchForm').onsubmit = handleCatchSubmit;
 }
 function handleCatchSubmit(e) {
@@ -4724,6 +4814,73 @@ function refreshProbabilities(event) { // event hinzugefügt
     }
 }
 
+    </script>
+    <script>
+   let deferredPrompt;
+   const installPwaButton = document.getElementById('installPwaButton'); // This ID will be for the button added in the next step
+
+   window.addEventListener('beforeinstallprompt', (e) => {
+     // Prevent Chrome 67 and earlier from automatically showing the prompt
+     e.preventDefault();
+     // Stash the event so it can be triggered later.
+     deferredPrompt = e;
+     // Update UI to notify the user they can add to home screen
+     if (installPwaButton) {
+       installPwaButton.style.display = 'block'; // Or 'inline-block', 'flex', etc.
+       console.log('`beforeinstallprompt` event fired, install button shown.');
+     } else {
+       console.log('`beforeinstallprompt` event fired, but install button not found yet.');
+     }
+   });
+
+   if (installPwaButton) {
+     installPwaButton.addEventListener('click', async () => {
+       // Hide our user interface that shows our A2HS button
+       installPwaButton.style.display = 'none';
+       if (deferredPrompt) {
+         // Show the prompt
+         deferredPrompt.prompt();
+         // Wait for the user to respond to the prompt
+         try {
+           const choiceResult = await deferredPrompt.userChoice;
+           if (choiceResult.outcome === 'accepted') {
+             console.log('User accepted the A2HS prompt');
+           } else {
+             console.log('User dismissed the A2HS prompt');
+           }
+         } catch (error) {
+           console.error('Error with userChoice:', error);
+         }
+         // We've used the prompt, and can't use it again, discard it
+         deferredPrompt = null;
+       } else {
+         console.log('Install button clicked, but no deferredPrompt available.');
+       }
+     });
+   }
+
+   window.addEventListener('appinstalled', () => {
+     // Hide the install button if the app is installed
+     if (installPwaButton) {
+       installPwaButton.style.display = 'none';
+     }
+     // Clear the deferredPrompt so it can be garbage collected
+     deferredPrompt = null;
+     // Optionally, send analytics event to indicate successful install
+     console.log('PWA was installed');
+   });
+    // PWA Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js') // Path relative to index.html
+          .then(registration => {
+            console.log('ServiceWorker registration successful with scope: ', registration.scope);
+          })
+          .catch(error => {
+            console.log('ServiceWorker registration failed: ', error);
+          });
+      });
+    }
     </script>
 </body>
 </html>
