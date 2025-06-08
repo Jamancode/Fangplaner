@@ -3,7 +3,7 @@
 // Basierend auf aktuellen Browser-Support-Daten und Best Practices
 // ============================================================================
 
-const CACHE_VERSION = 'v4.0.0';
+const CACHE_VERSION = 'v4.0.1';
 const CACHE_NAME = `fangkalender-pwa-${CACHE_VERSION}`;
 const STATIC_CACHE = `fangkalender-static-${CACHE_VERSION}`;
 const API_CACHE = `fangkalender-api-${CACHE_VERSION}`;
