@@ -41,9 +41,9 @@
     <!-- <meta name="twitter:site" content="@IhrTwitterHandle"> -->
 
     <!-- Favicon Links (verschiedene Größen und Formate) -->
-    <link rel="icon" type="image/png" sizes="16x16" href="icons/favicon-16x16.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48x48.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="icons/icon-16x16.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/icon-32x32.png">
+    <link rel="icon" type="image/png" sizes="48x48" href="icons/icon-48x48.png">
     <!-- <link rel="shortcut icon" href="favicon.ico"> -->
 
     <!-- Microsoft Tiles -->
@@ -2059,6 +2059,73 @@
                         </button>
                     </div>
                     <hr style="margin: 2rem 0;">
+
+                    <!-- START NEW INSTALLATION GUIDE SECTION HERE -->
+                    <div class="pwa-install-guides-section" style="margin-bottom: 1.5rem; padding: 1.5rem; background-color: var(--bg-secondary); border-radius: var(--radius-lg); box-shadow: var(--shadow-md);">
+                        <h4 style="margin-bottom: 1rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--bg-tertiary); font-size: 1.2rem; color: var(--text-primary);">App Installationsanleitungen</h4>
+
+                        <div class="collapsible-section" style="background-color: var(--bg-primary); margin-bottom: 0.75rem;">
+                            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                <span><i class="fab fa-apple" style="margin-right: 0.5em;"></i> Safari (iOS)</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="collapsible-content">
+                                <ol style="padding-left: 1.5rem; margin-top:0.5rem; list-style-position: inside;">
+                                    <li>Tippen Sie auf das Teilen-Symbol <i class="fas fa-share-square"></i> (Quadrat mit Pfeil nach oben) in der Menüleiste.</li>
+                                    <li>Scrollen Sie in der Auswahl nach unten und tippen Sie auf "Zum Home-Bildschirm" <i class="fas fa-plus-square"></i>.</li>
+                                    <li>Bestätigen Sie mit "Hinzufügen" oben rechts.</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="collapsible-section" style="background-color: var(--bg-primary); margin-bottom: 0.75rem;">
+                            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                <span><i class="fab fa-chrome" style="margin-right: 0.5em;"></i> Chrome (Desktop/Android) & Chromium</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="collapsible-content">
+                                <p style="margin-top:0.5rem;"><strong>Desktop:</strong> Klicken Sie auf die drei Punkte <i class="fas fa-ellipsis-v"></i> (Menü) rechts oben in der Adressleiste und wählen Sie "Angelfreund installieren..." oder "App installieren...".</p>
+                                <p><strong>Android:</strong> Suchen Sie im Menü <i class="fas fa-ellipsis-v"></i> nach "App installieren" oder achten Sie auf ein Installations-Banner.</p>
+                            </div>
+                        </div>
+
+                        <div class="collapsible-section" style="background-color: var(--bg-primary); margin-bottom: 0.75rem;">
+                            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                <span><i class="fab fa-firefox-browser" style="margin-right: 0.5em;"></i> Firefox (Desktop/Android)</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="collapsible-content">
+                                <p style="margin-top:0.5rem;"><strong>Android:</strong> Tippen Sie auf das Menü-Symbol <i class="fas fa-ellipsis-v"></i> (drei Punkte) und wählen Sie "Installieren" oder "Seite" -> "Zum Startbildschirm hinzufügen".</p>
+                                <p><strong>Desktop:</strong> Firefox unterstützt keine direkte Installation von PWAs. Sie können ein Lesezeichen erstellen (Strg+D oder Cmd+D) oder Add-ons für PWA-ähnliches Verhalten suchen.</p>
+                            </div>
+                        </div>
+
+                        <div class="collapsible-section" style="background-color: var(--bg-primary); margin-bottom: 0.75rem;">
+                            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                <span><i class="fab fa-edge" style="margin-right: 0.5em;"></i> Edge (Desktop/Android)</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="collapsible-content">
+                                <p style="margin-top:0.5rem;"><strong>Desktop:</strong> Klicken Sie auf die drei Punkte <i class="fas fa-ellipsis-h"></i> (Menü) -> "Apps" -> "Diese Website als App installieren".</p>
+                                <p><strong>Android:</strong> Tippen Sie auf das Menü-Symbol <i class="fas fa-ellipsis-h"></i> -> "Zum Telefon hinzufügen".</p>
+                            </div>
+                        </div>
+
+                        <div class="collapsible-section" style="background-color: var(--bg-primary); margin-bottom: 0.75rem;">
+                            <div class="collapsible-header" onclick="toggleCollapsible(this)">
+                                <span><i class="fab fa-opera" style="margin-right: 0.5em;"></i> Opera (Desktop/Mobile)</span>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="collapsible-content">
+                                <p style="margin-top:0.5rem;"><strong>Desktop:</strong> Suchen Sie nach einem Installations-Symbol <i class="fas fa-plus-square"></i> in der Adressleiste oder im Opera-Menü.</p>
+                                <p><strong>Mobile:</strong> Tippen Sie auf das Menü-Symbol und wählen Sie "Startbildschirm" oder "Zum Startbildschirm hinzufügen".</p>
+                            </div>
+                        </div>
+                        <p style="font-size:0.9em; color:var(--text-secondary); margin-top:1rem; text-align:center;">Hinweis: Die genauen Bezeichnungen können je nach Browser-Version leicht variieren.</p>
+                    </div>
+                    <!-- END NEW INSTALLATION GUIDE SECTION HERE -->
+
+                    <hr style="margin: 2rem 0;">
                     <div class="form-group">
                         <label class="form-label">Daten Exportieren</label>
                         <button class="btn" onclick="exportData()">
@@ -2863,8 +2930,7 @@ function switchTab(tabName, event) { // event hinzugefügt
 }
 
 // Weather Functions
-async function updateWeather() { // if (!currentPosition) { console.log("Current position not available for weather update."); }
- if (!openWeatherApiKey) { document.getElementById('temperature').textContent = "Key fehlt"; document.getElementById('pressure').textContent = "Key fehlt"; document.getElementById('wind').textContent = "Key fehlt"; updateProbabilities(); updateSolunarTimes(); updateMoonPhase(); return; } const lat = currentPosition ? currentPosition.lat : 50.643464; const lon = currentPosition ? currentPosition.lon : 11.918244; try { const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric&lang=de`); if (!response.ok) { const errorData = await response.json(); if (response.status === 401) { console.error('Weather API Error: Ungültiger API Key.'); alert('Fehler Wetterabfrage: API Key ungültig.'); document.getElementById('temperature').textContent = "Key Problem"; document.getElementById('pressure').textContent = "Key Problem"; document.getElementById('wind').textContent = "Key Problem"; } else { throw new Error(`Weather API Error: ${response.status} - ${errorData.message || 'Unbekannt'}`); } weatherData = null; } else { weatherData = await response.json(); } if (weatherData) { document.getElementById('temperature').textContent = `${Math.round(weatherData.main.temp)}°C`; document.getElementById('pressure').textContent = `${weatherData.main.pressure} hPa`; document.getElementById('wind').textContent = `${Math.round(weatherData.wind.speed * 3.6)} km/h`; updatePressureTrend(weatherData.main.pressure); } updateMoonPhase(); updateProbabilities(); updateSolunarTimes(); } catch (error) { console.error('Weather update failed:', error); document.getElementById('temperature').textContent = "Fehler"; document.getElementById('pressure').textContent = "Fehler"; document.getElementById('wind').textContent = "Fehler"; weatherData = null; updateProbabilities(); } }
+async function updateWeather() { if (!currentPosition) { console.log("Current position not available for weather update."); } if (!openWeatherApiKey) { document.getElementById('temperature').textContent = "Key fehlt"; document.getElementById('pressure').textContent = "Key fehlt"; document.getElementById('wind').textContent = "Key fehlt"; updateProbabilities(); updateSolunarTimes(); updateMoonPhase(); return; } const lat = currentPosition ? currentPosition.lat : 50.643464; const lon = currentPosition ? currentPosition.lon : 11.918244; try { const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${openWeatherApiKey}&units=metric&lang=de`); if (!response.ok) { const errorData = await response.json(); if (response.status === 401) { console.error('Weather API Error: Ungültiger API Key.'); alert('Fehler Wetterabfrage: API Key ungültig.'); document.getElementById('temperature').textContent = "Key Problem"; document.getElementById('pressure').textContent = "Key Problem"; document.getElementById('wind').textContent = "Key Problem"; } else { throw new Error(`Weather API Error: ${response.status} - ${errorData.message || 'Unbekannt'}`); } weatherData = null; } else { weatherData = await response.json(); } if (weatherData) { document.getElementById('temperature').textContent = `${Math.round(weatherData.main.temp)}°C`; document.getElementById('pressure').textContent = `${weatherData.main.pressure} hPa`; document.getElementById('wind').textContent = `${Math.round(weatherData.wind.speed * 3.6)} km/h`; updatePressureTrend(weatherData.main.pressure); } updateMoonPhase(); updateProbabilities(); updateSolunarTimes(); } catch (error) { console.error('Weather update failed:', error); document.getElementById('temperature').textContent = "Fehler"; document.getElementById('pressure').textContent = "Fehler"; document.getElementById('wind').textContent = "Fehler"; weatherData = null; updateProbabilities(); } }
 function updatePressureTrend(currentPressure) { pressureHistory.push({ pressure: currentPressure, timestamp: new Date().getTime() }); const dayAgo = new Date().getTime() - 24 * 60 * 60 * 1000; pressureHistory = pressureHistory.filter(p => p.timestamp > dayAgo); const trendElement = document.getElementById('pressureTrend'); if (pressureHistory.length >= 3) { const recent = pressureHistory.slice(-3); const trendValue = recent[2].pressure - recent[0].pressure; if (trendValue > 0.5) { trendElement.innerHTML = '<i class="fas fa-arrow-up"></i>'; trendElement.className = 'pressure-trend rising'; } else if (trendValue < -0.5) { trendElement.innerHTML = '<i class="fas fa-arrow-down"></i>'; trendElement.className = 'pressure-trend falling'; } else { trendElement.innerHTML = '<i class="fas fa-minus"></i>'; trendElement.className = 'pressure-trend stable'; } } else { trendElement.innerHTML = '<i class="fas fa-minus"></i>'; trendElement.className = 'pressure-trend stable'; } saveData(); }
 function updateMoonPhase() { const moonData = getMoonPhase(new Date()); document.getElementById('moonPhase').textContent = moonData.name; const moonVisual = document.getElementById('moonPhaseVisual'); if (moonVisual) { moonVisual.innerHTML = ''; const phaseDiv = document.createElement('div'); phaseDiv.style.width = '100%'; phaseDiv.style.height = '100%'; phaseDiv.style.borderRadius = '50%'; phaseDiv.style.position = 'absolute'; const lightPart = document.createElement('div'); lightPart.style.width = '100%'; lightPart.style.height = '100%'; lightPart.style.borderRadius = '50%'; lightPart.style.background = '#f0f0f0'; moonVisual.appendChild(lightPart); const darkPart = document.createElement('div'); darkPart.style.width = '100%'; darkPart.style.height = '100%'; darkPart.style.borderRadius = '50%'; darkPart.style.background = '#333333'; darkPart.style.position = 'absolute'; darkPart.style.top = '0'; darkPart.style.left = '0'; darkPart.style.clipPath = moonData.clipPath; moonVisual.appendChild(darkPart); } }
 function getMoonPhase(date) { let Y = date.getFullYear(), M = date.getMonth() + 1, D = date.getDate(), c = 0, e = 0, jd = 0, b = 0; if (M < 3) { Y--; M += 12; } let A = Math.floor(Y / 100); let B = Math.floor(A / 4); c = 2 - A + B; e = Math.floor(365.25 * (Y + 4716)); let f = Math.floor(30.6001 * (M + 1)); jd = c + D + e + f - 1524.5; let daysSinceNew = jd - 2451549.5; let newMoons = daysSinceNew / 29.53058861; b = Math.floor(newMoons); let age = (newMoons - b) * 29.53; let phaseValue = age / 29.53; let illumination = 0.5 * (1 - Math.cos(2 * Math.PI * phaseValue)); let name = "", clipPath = ""; if (age < 1.8456) { name = 'Neumond'; illumination = 0; } else if (age < 5.5368) name = 'Zunehmende Sichel'; else if (age < 9.2280) { name = 'Erstes Viertel'; illumination = 0.5; } else if (age < 12.9192) name = 'Zunehmender Mond'; else if (age < 16.6104) { name = 'Vollmond'; illumination = 1;} else if (age < 20.3016) name = 'Abnehmender Mond'; else if (age < 23.9928) { name = 'Letztes Viertel'; illumination = 0.5; } else if (age < 27.6840) name = 'Abnehmende Sichel'; else { name = 'Neumond'; illumination = 0; } if (name === 'Neumond') clipPath = 'circle(100% at 50% 50%)'; else if (name === 'Vollmond') clipPath = 'circle(0% at 50% 50%)'; else if (name === 'Erstes Viertel') clipPath = 'polygon(50% 0%, 100% 0%, 100% 100%, 50% 100%)'; else if (name === 'Letztes Viertel') clipPath = 'polygon(0% 0%, 50% 0%, 50% 100%, 0% 100%)'; else if (name === 'Zunehmende Sichel' || name === 'Zunehmender Mond') { let percent = Math.round(illumination * 100); clipPath = `inset(0 0 0 ${100 - percent}%)`; } else if (name === 'Abnehmende Sichel' || name === 'Abnehmender Mond') { let percent = Math.round(illumination * 100); clipPath = `inset(0 ${percent}% 0 0)`; } return { phase: phaseValue, name, illumination, clipPath }; }
@@ -4980,115 +5046,6 @@ class ServiceWorkerManager {
 const swManager = new ServiceWorkerManager('/service-worker.js');
 
 // Dynamisches Hinzufügen von CSS für die Update-Benachrichtigung (optional, falls benötigt)
-
-// Intelligente Installationsstrategie für Chrome/Edge
-class ChromeInstallStrategy {
-    constructor() {
-        this.engagementScore = 0;
-        this.installPromptShown = false;
-        this.deferredPrompt = null; // Store the prompt event
-    }
-
-    setDeferredPrompt(prompt) {
-        this.deferredPrompt = prompt;
-    }
-
-    // Engagement-basierte Installation
-    trackEngagement() {
-        this.engagementScore++;
-        // Nach 3 Interaktionen: Installation anbieten
-        if (this.engagementScore >= 3 && !this.installPromptShown && this.deferredPrompt) {
-            this.showCustomInstallPrompt();
-        }
-    }
-
-    showCustomInstallPrompt() {
-        // Placeholder for custom modal. In a real scenario, this would build/show a styled modal.
-        // For now, it will directly trigger the browser's prompt if available.
-        if (!this.deferredPrompt) {
-            console.warn('ChromeInstallStrategy: Deferred prompt not available to show custom prompt.');
-            // Optionally, trigger a generic guide here if prompt is missing
-            if (window.pwaInstaller && typeof window.pwaInstaller.triggerAppropriateInstallGuide === 'function') {
-                window.pwaInstaller.triggerAppropriateInstallGuide();
-            }
-            return;
-        }
-
-        const modalId = 'customChromeInstallModal';
-        let modal = document.getElementById(modalId);
-        if (!modal) {
-            modal = document.createElement('div');
-            modal.id = modalId;
-            modal.className = 'modal pwa-install-modal'; // Use existing modal classes for styling
-            // Basic structure similar to other modals in the app
-            modal.innerHTML = `
-                <div class="modal-content pwa-install-modal-content" style="max-width: 400px;">
-                    <div class="modal-header pwa-install-modal-header">
-                        <h2>${window.pwaInstaller && window.pwaInstaller.options.appName ? window.pwaInstaller.options.appName : 'App'} installieren</h2>
-                        <button type="button" class="close-btn pwa-install-close-btn">&times;</button>
-                    </div>
-                    <div class="modal-body pwa-install-modal-body">
-                        <p>Für das beste Erlebnis, installieren Sie diese App auf Ihrem Gerät.</p>
-                        <button id="customInstallButton" class="btn btn-success btn-large" style="width:100%;">Jetzt installieren</button>
-                    </div>
-                </div>
-            `;
-            document.body.appendChild(modal);
-
-            modal.querySelector('.close-btn').onclick = () => {
-                modal.classList.remove('active');
-                setTimeout(() => modal.remove(), 300);
-            };
-            modal.onclick = (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                    setTimeout(() => modal.remove(), 300);
-                }
-            };
-            document.getElementById('customInstallButton').onclick = () => {
-                if (this.deferredPrompt) {
-                    this.deferredPrompt.prompt();
-                    this.deferredPrompt.userChoice.then(({ outcome }) => {
-                        if (window.pwaInstaller && window.pwaInstaller.options.debug) console.log(`ChromeInstallStrategy: User response: ${outcome}`);
-                        this.installPromptShown = true; // Mark as shown regardless of outcome
-                        if (outcome === 'accepted' && window.pwaInstaller) {
-                            window.pwaInstaller.showSuccessMessage('Installation gestartet!');
-                        } else if (window.pwaInstaller) {
-                            window.pwaInstaller.showInstallErrorMessage('Installation abgelehnt oder abgebrochen.', false);
-                        }
-                    });
-                }
-                modal.classList.remove('active');
-                setTimeout(() => modal.remove(), 300);
-            };
-        }
-        modal.classList.add('active'); // Show the modal
-        this.installPromptShown = true;
-    }
-}
-
-// Samsung-spezifische Erkennung und Optimierung
-function detectSamsungDevice() {
-    const isSamsungBrowser = /SamsungBrowser/.test(navigator.userAgent);
-    // More specific Samsung device detection regex might be needed if general /SM-/ is too broad
-    const isSamsungDevice = /SM-|Galaxy|SCH-|SPH-|SGH-|GT-/.test(navigator.userAgent);
-
-    return {
-        browser: isSamsungBrowser,
-        device: isSamsungDevice, // This indicates a Samsung manufactured device
-        supportsWebAPK: isSamsungBrowser && isSamsungDevice // WebAPK more likely on Samsung device + Samsung Browser
-    };
-}
-
-// Fallback-Strategie für limitierte Browser
-function createBrowserFallback(browserName = 'diesem Browser') {
-    return {
-        installMethod: 'bookmark',
-        instructions: `Für ${browserName}, erstellen Sie am besten ein Lesezeichen für schnellen Zugriff. Die volle App-Installation wird möglicherweise nicht unterstützt.`,
-        showAdvancedFeatures: false,
-        cacheStrategy: 'minimal' // Could inform service worker if needed
-    };
-}
 // Dies stellt sicher, dass die CSS-Variablen auch im JS verfügbar sind.
 const swStyles = document.createElement('style');
 swStyles.textContent = `
@@ -5100,159 +5057,175 @@ swStyles.textContent = `
 `;
 document.head.appendChild(swStyles);
 
-class iOSSmartDetector {
+// ============================================================================
+// EngagementChecker Class
+// ============================================================================
+class EngagementChecker {
     constructor(options = {}) {
-        this.options = options; // e.g., appName from UniversalPWAInstaller
-        this.userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        this.options = Object.assign({
+            minSiteVisits: 0, // Minimal checks for aggressive prompt
+            minDaysSinceFirstVisit: 0,
+            debug: false
+        }, options);
+        if (this.options.debug) console.log('EngagementChecker: Initialized with options:', this.options);
     }
 
-    detect() {
-        const isIOS = /iPad|iPhone|iPod/.test(this.userAgent) && !window.MSStream;
-        const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone === true);
-        const hasShownPrompt = localStorage.getItem('ios-prompt-shown');
-
-        return {
-            isIOS,
-            isStandalone: isInStandaloneMode,
-            shouldShowPrompt: isIOS && !isInStandaloneMode && !hasShownPrompt,
-            installMethod: this.determineInstallMethod(isIOS)
-        };
+    async isEngaged() {
+        // For aggressive prompt, we can bypass complex checks
+        if (this.options.debug) console.log('EngagementChecker: isEngaged() called, returning true for aggressive prompt.');
+        return true;
     }
 
-    determineInstallMethod(isIOSDevice) {
-        if (!isIOSDevice) return 'none';
-        // For simplicity in this step, we'll default to 'guided'.
-        // const isRecent = this.isiOSRecent();
-        // const hasShortcutsApp = await this.hasShortcutsApp(); // hasShortcutsApp might be async
-
-        // if (hasShortcutsApp) return 'shortcuts';
-        // if (isRecent) return 'guided';
-        return 'guided'; // Defaulting to guided for now. Can be expanded.
-    }
-
-    isiOSRecent() {
-        const match = this.userAgent.match(/OS (\d+)_/);
-        const version = match ? parseInt(match[1]) : 0;
-        return version >= 14; // iOS 14+ generally has better PWA support
-    }
-
-    hasShortcutsApp() {
-        // This is very difficult to detect reliably from within the browser.
-        // For this example, we might assume it's available on recent iOS,
-        // or rely on the user to know if they have the Shortcuts app.
-        // Consider this true for iOS 14+ for now for demonstration.
-        return this.isiOSRecent();
-    }
-
-    markPromptShown() {
-        localStorage.setItem('ios-prompt-shown', 'true');
+    registerVisit() {
+        // Minimal or no actual tracking needed for aggressive prompt
+        if (this.options.debug) console.log('EngagementChecker: registerVisit() called.');
     }
 }
 
-class iOSInstallAssistant {
-    constructor(options = {}) {
-        this.options = options; // e.g., appName
+// ============================================================================
+// ChromeInstallStrategy Class
+// ============================================================================
+class ChromeInstallStrategy {
+    constructor(installer, engagementChecker) {
+        this.installer = installer; // Instance of UniversalPWAInstaller
+        this.engagementChecker = engagementChecker;
+        this.deferredPrompt = null;
+        this.customPromptEl = null;
+        if (this.installer.options.debug) console.log('ChromeInstallStrategy: Initialized.');
     }
 
-    show() {
-        const existingModal = document.getElementById('iosInstallVisualGuide');
-        if (existingModal) existingModal.remove();
-
-        const assistantModal = document.createElement('div');
-        assistantModal.id = 'iosInstallVisualGuide';
-        assistantModal.className = 'modal pwa-install-modal active'; // Use existing modal classes
-        assistantModal.style.zIndex = '2900'; // Ensure it's above other modals if necessary
-
-        // Using FontAwesome icons as placeholders for image paths
-        assistantModal.innerHTML = `
-            <div class="modal-content pwa-install-modal-content">
-                <div class="modal-header pwa-install-modal-header">
-                    <h2>${this.options.appName || 'App'} installieren (iOS)</h2>
-                    <button type="button" class="close-btn pwa-install-close-btn">&times;</button>
-                </div>
-                <div class="modal-body pwa-install-modal-body ios-step-guide">
-                    <div class="step active" data-step="1" style="text-align:center; padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
-                        <p style="font-size:1.1em;">1. Tippen Sie auf das Teilen-Symbol unten:</p>
-                        <i class="fas fa-share-square fa-2x" style="color:#007aff;"></i>
-                        <div class="arrow-down" style="font-size:1.5em; margin-top:5px;">⬇️</div>
-                    </div>
-                    <div class="step" data-step="2" style="text-align:center; padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
-                        <p style="font-size:1.1em;">2. Scrollen Sie und wählen Sie "Zum Home-Bildschirm":</p>
-                        <i class="fas fa-plus-square fa-2x" style="color:#007aff;"></i>
-                    </div>
-                    <div class="step" data-step="3" style="text-align:center;">
-                        <p style="font-size:1.1em;">3. Tippen Sie oben rechts auf "Hinzufügen":</p>
-                        <i class="fas fa-check-circle fa-2x" style="color:#007aff;"></i>
-                    </div>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(assistantModal);
-
-        assistantModal.querySelector('.close-btn').onclick = () => {
-            assistantModal.classList.remove('active');
-            setTimeout(() => assistantModal.remove(), 300);
-        };
-        assistantModal.onclick = (e) => {
-            if (e.target === assistantModal) {
-                assistantModal.classList.remove('active');
-                setTimeout(() => assistantModal.remove(), 300);
-            }
-        };
-        // this.startInteractiveGuide(assistantModal); // Interactive part can be complex
+    setDeferredPrompt(event) {
+        this.deferredPrompt = event;
+        if (this.installer.options.debug) console.log('ChromeInstallStrategy: deferredPrompt set.');
+        // Automatically try to show prompt if engaged (which is always true for aggressive)
+        this.checkAndShowCustomPrompt();
     }
 
-    // startInteractiveGuide(assistant) { ... } // Implementation deferred for brevity if too complex for one step
-}
-
-// iOS Shortcuts Integration
-function createiOSShortcut(appName, appURL, base64IconData) {
-    const shortcutData = {
-        "WFWorkflowActions": [
-            {
-                "WFWorkflowActionIdentifier": "is.workflow.actions.openurl",
-                "WFWorkflowActionParameters": { "WFInput": appURL }
-            },
-            // The original share action might not directly lead to A2HS.
-            // A more reliable shortcut would open Safari and instruct the user.
-            // For now, let's make a shortcut that just opens the app URL.
-            // A true "Add to Home Screen" shortcut is very complex to achieve directly.
-        ],
-        "WFWorkflowName": `Öffne ${appName}`, // Changed to be more direct
-        "WFWorkflowIcon": {
-            "WFWorkflowIconImageData": base64IconData || "", // Placeholder
-            "WFWorkflowIconGlyphNumber": 59648 // Safari icon glyph
+    async checkAndShowCustomPrompt() {
+        if (!this.deferredPrompt) {
+            if (this.installer.options.debug) console.log('ChromeInstallStrategy: No deferredPrompt, cannot show custom prompt.');
+            return;
         }
-    };
-    // Create a Blob from the JSON data
-    const blob = new Blob([JSON.stringify(shortcutData)], { type: 'application/vnd.apple.shortcut' });
-    const fileUrl = URL.createObjectURL(blob);
-
-    // For direct import, the structure is often more complex and requires a signed .shortcut file.
-    // This creates a downloadable .shortcut file.
-    // The direct `shortcuts://import-workflow` is less reliable for complex workflows from web.
-    return fileUrl; // Returns a URL to the blob for download
-}
-
-function showShortcutOption(appName, appURL, base64IconData, targetElementId) {
-    const targetElement = document.getElementById(targetElementId);
-    if (!targetElement) {
-        console.warn('Target element for iOS shortcut button not found:', targetElementId);
-        return;
+        const engaged = await this.engagementChecker.isEngaged();
+        if (engaged) {
+            if (this.installer.options.debug) console.log('ChromeInstallStrategy: User is engaged (or aggressive mode), showing custom prompt.');
+            this.showCustomInstallPrompt();
+        } else {
+            if (this.installer.options.debug) console.log('ChromeInstallStrategy: User not engaged, standard prompt flow will apply.');
+        }
     }
 
-    const shortcutURL = createiOSShortcut(appName, appURL, base64IconData);
-    const button = document.createElement('a');
-    button.href = shortcutURL;
-    button.className = 'btn btn-info'; // Use existing app styling
-    button.innerHTML = '<i class="fas fa-link"></i> iOS Shortcut erstellen';
-    button.title = 'Erstellt einen Shortcut, um die App schneller zu öffnen';
-    button.download = `${appName.replace(/\s+/g, '_')}.shortcut`; // Suggest a filename
+    showCustomInstallPrompt() {
+        if (this.installer.isAppInstalled()) {
+             if (this.installer.options.debug) console.log("ChromeInstallStrategy: App already installed, not showing custom prompt.");
+             return;
+        }
+        if (this.customPromptEl && this.customPromptEl.parentNode) {
+            if (this.installer.options.debug) console.log("ChromeInstallStrategy: Custom prompt already visible.");
+            return; // Already shown
+        }
 
-    // Clear previous button if any
-    targetElement.innerHTML = '';
-    targetElement.appendChild(button);
-    targetElement.style.display = 'block'; // Make sure it's visible
+        if (this.installer.options.debug) console.log('ChromeInstallStrategy: Creating and showing custom install prompt.');
+
+        // Hide the generic install button if our custom one is shown
+        if (this.installer.installButton) {
+            this.installer.installButton.style.display = 'none';
+        }
+
+        this.customPromptEl = document.createElement('div');
+        this.customPromptEl.id = 'customChromeInstallPrompt';
+        // Apply styles consistent with the app's theme dynamically
+        this.customPromptEl.style.position = 'fixed';
+        this.customPromptEl.style.bottom = '20px';
+        this.customPromptEl.style.left = '50%';
+        this.customPromptEl.style.transform = 'translateX(-50%)';
+        this.customPromptEl.style.padding = '15px 20px';
+        this.customPromptEl.style.background = 'var(--primary-gradient, linear-gradient(135deg, #40127c 0%, #1a0129 100%))';
+        this.customPromptEl.style.color = 'white';
+        this.customPromptEl.style.borderRadius = 'var(--radius-lg, 16px)';
+        this.customPromptEl.style.boxShadow = 'var(--shadow-xl, 0 10px 15px rgba(0,0,0,0.2))';
+        this.customPromptEl.style.zIndex = '3000';
+        this.customPromptEl.style.display = 'flex';
+        this.customPromptEl.style.alignItems = 'center';
+        this.customPromptEl.style.gap = '15px';
+        this.customPromptEl.style.opacity = '0';
+        this.customPromptEl.style.transition = 'opacity 0.5s ease-in-out';
+
+
+        const textEl = document.createElement('span');
+        textEl.textContent = `${this.installer.options.appName} installieren für schnellen Zugriff?`;
+        textEl.style.flexGrow = '1';
+
+        const installBtn = document.createElement('button');
+        installBtn.textContent = 'Installieren';
+        installBtn.style.padding = '8px 15px';
+        installBtn.style.border = 'none';
+        installBtn.style.borderRadius = 'var(--radius-md, 8px)';
+        installBtn.style.background = 'var(--success-gradient, green)';
+        installBtn.style.color = 'white';
+        installBtn.style.fontWeight = 'bold';
+        installBtn.style.cursor = 'pointer';
+        installBtn.onclick = () => this.triggerInstallPrompt();
+
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '&times;';
+        closeBtn.style.background = 'transparent';
+        closeBtn.style.border = 'none';
+        closeBtn.style.color = 'white';
+        closeBtn.style.fontSize = '1.5em';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.style.padding = '0 5px';
+        closeBtn.onclick = () => this.dismissCustomPrompt();
+
+        this.customPromptEl.appendChild(textEl);
+        this.customPromptEl.appendChild(installBtn);
+        this.customPromptEl.appendChild(closeBtn);
+        document.body.appendChild(this.customPromptEl);
+
+        // Fade in
+        setTimeout(() => { this.customPromptEl.style.opacity = '1'; }, 50);
+    }
+
+    triggerInstallPrompt() {
+        if (this.deferredPrompt) {
+            this.deferredPrompt.prompt();
+            this.deferredPrompt.userChoice.then(({ outcome }) => {
+                if (this.installer.options.debug) console.log(`ChromeInstallStrategy: User response: ${outcome}`);
+                if (outcome === 'accepted') {
+                    this.installer.showSuccessMessage('App wird installiert!');
+                    this.installer._trackInstallation('chrome_custom_prompt');
+                } else {
+                    this.installer.showInstallErrorMessage('Installation abgebrochen.', false);
+                }
+                this.dismissCustomPrompt();
+                this.deferredPrompt = null;
+                // Ensure generic button is also hidden as prompt was handled
+                if (this.installer.installButton) this.installer.installButton.style.display = 'none';
+            }).catch(err => {
+                if (this.installer.options.debug) console.error('ChromeInstallStrategy: Error during prompt userChoice:', err);
+                this.installer.showInstallErrorMessage('Fehler beim Installationsvorgang.');
+                this.dismissCustomPrompt();
+            });
+        } else {
+            if (this.installer.options.debug) console.log('ChromeInstallStrategy: Deferred prompt not available for trigger.');
+            this.dismissCustomPrompt();
+        }
+    }
+
+    dismissCustomPrompt() {
+        if (this.customPromptEl && this.customPromptEl.parentNode) {
+            this.customPromptEl.style.opacity = '0';
+            setTimeout(() => {
+                 if (this.customPromptEl && this.customPromptEl.parentNode) {
+                     this.customPromptEl.remove();
+                 }
+                 this.customPromptEl = null;
+                 // If dismissed, and not accepted, the generic button might be relevant again
+                 // if the deferredPrompt is still valid (though unlikely after one dismissal from custom UI)
+                 // For simplicity, we'll keep it hidden if our custom prompt was ever shown for this deferredPrompt instance.
+            }, 500); // Allow fade out
+        }
+    }
 }
 
 // ============================================================================
@@ -5268,7 +5241,7 @@ class UniversalPWAInstaller {
             appVersion: '1.0.0',
             swPath: '/service-worker.js',
             manifestPath: '/manifest.json',
-            iconsPath: 'assets/icons/',
+            iconsPath: 'icons/',
             promptDelay: 3000, // ms before showing install prompt or guide
             enableIOSInstallPopup: true,
             enableFirefoxInstallGuide: true,
@@ -5282,19 +5255,17 @@ class UniversalPWAInstaller {
         this.installButton = document.getElementById(this.options.installButtonId);
         this.deferredPrompt = null;
         this.userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        this.engagementChecker = new EngagementChecker({ debug: this.options.debug });
+        this.chromeStrategy = new ChromeInstallStrategy(this, this.engagementChecker);
         this.currentBrowser = this.detectBrowser();
         this.currentOS = this.detectOS();
         this.installSource = 'direct'; // Default, can be overridden by URL params
-        this.chromeStrategy = new ChromeInstallStrategy();
-        this.iosDetector = new iOSSmartDetector({ appName: this.options.appName }); // Added
-        this.iosAssistant = new iOSInstallAssistant({ appName: this.options.appName }); // Added
 
         this.init();
     }
 
     init() {
         if (this.options.debug) console.log('UniversalPWAInstaller: Initializing...');
-        document.body.addEventListener('click', () => { if (this.chromeStrategy) this.chromeStrategy.trackEngagement(); }, true); // Added for engagement tracking
         this.setupEventListeners();
         this.initPlatformSpecificFeatures();
         this.addCoreInstallStyles(); // Basis-Styling für Modals etc.
@@ -5326,17 +5297,26 @@ class UniversalPWAInstaller {
     }
 
     setupEventListeners() {
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            this.chromeStrategy.setDeferredPrompt(e); // Modified
-            this.deferredPrompt = e; // Modified - keep local copy
-            this.enhanceBeforeInstallPrompt(e); // Point D
-            if (this.installButton) {
-                this.installButton.style.display = 'block';
-                this.installButton.onclick = () => this.promptInstall();
-            }
-            if (this.options.debug) console.log('UniversalPWAInstaller: `beforeinstallprompt` event gefeuert.');
-        });
+            // Event listener for the 'beforeinstallprompt' event
+            window.addEventListener('beforeinstallprompt', (e) => {
+                e.preventDefault();
+                this.deferredPrompt = e; // Keep this for general reference
+
+                if ((this.currentBrowser === 'Chrome' || this.currentBrowser === 'Edge' || this.currentBrowser === 'Opera') && this.currentOS !== 'iOS') { // Opera desktop also uses Chromium
+                    this.chromeStrategy.setDeferredPrompt(e);
+                    // The chromeStrategy will now try to show its custom prompt.
+                    // The generic installButton display is handled/suppressed by chromeStrategy.showCustomInstallPrompt()
+                    return; // Let ChromeStrategy handle display
+                }
+
+                // Fallback for other browsers or if chromeStrategy doesn't handle it / is not applicable
+                this.enhanceBeforeInstallPrompt(e); // Call this for non-ChromeStrategy browsers or as a general enhancement
+                if (this.installButton) {
+                    this.installButton.style.display = 'block';
+                    this.installButton.onclick = () => this.promptInstall();
+                }
+                if (this.options.debug) console.log('UniversalPWAInstaller: `beforeinstallprompt` event gefeuert (standard/fallback).');
+            });
 
         window.addEventListener('appinstalled', () => {
             if (this.installButton) this.installButton.style.display = 'none';
@@ -5350,10 +5330,8 @@ class UniversalPWAInstaller {
         // Fallback-Logik für den Installationsbutton, falls 'beforeinstallprompt' nicht feuert
         if (this.installButton) {
             this.installButton.addEventListener('click', () => {
-                if ((this.currentBrowser === 'Chrome' || this.currentBrowser === 'Edge') && this.chromeStrategy && this.chromeStrategy.deferredPrompt) {
-                    this.chromeStrategy.showCustomInstallPrompt();
-                } else if (this.deferredPrompt) {
-                    this.promptInstall(); // Original prompt for other cases
+                if (this.deferredPrompt) {
+                    this.promptInstall();
                 } else {
                     this.triggerAppropriateInstallGuide();
                 }
@@ -5362,11 +5340,6 @@ class UniversalPWAInstaller {
     }
 
     promptInstall() {
-        if ((this.currentBrowser === 'Chrome' || this.currentBrowser === 'Edge') && this.chromeStrategy && this.chromeStrategy.deferredPrompt) {
-            this.chromeStrategy.showCustomInstallPrompt();
-            return;
-        }
-
         if (this.deferredPrompt) {
             this.deferredPrompt.prompt();
             this.deferredPrompt.userChoice.then(({ outcome }) => {
@@ -5387,6 +5360,10 @@ class UniversalPWAInstaller {
     }
 
     triggerAppropriateInstallGuide() {
+        if (this.chromeStrategy && this.chromeStrategy.customPromptEl && this.chromeStrategy.customPromptEl.parentNode) {
+            if (this.options.debug) console.log("UniversalPWAInstaller: Chrome custom prompt is active, not showing other guides.");
+            return;
+        }
         if (this.isAppInstalled()) {
             if (this.options.debug) console.log("UniversalPWAInstaller: App ist bereits installiert. Kein Guide nötig.");
             return;
@@ -5394,27 +5371,8 @@ class UniversalPWAInstaller {
 
         if (this.options.debug) console.log(`UniversalPWAInstaller: Triggering guide for OS: ${this.currentOS}, Browser: ${this.currentBrowser}`);
 
-        const iosInfo = this.iosDetector.detect();
-        if (iosInfo.isIOS && !iosInfo.isStandalone) {
-            if (iosInfo.shouldShowPrompt) {
-                if (iosInfo.installMethod === 'guided') {
-                    this.iosAssistant.show();
-                } else if (iosInfo.installMethod === 'shortcuts') {
-                    // We'll need a placeholder for base64 icon data initially
-                    // This will be filled in a subsequent step.
-                    // For now, just log that it would show.
-                    console.log("iOS Shortcut method selected - UI button would be shown here.");
-                    // showShortcutOption(this.options.appName, window.location.href, "PLACEHOLDER_BASE64_ICON_DATA", "iosShortcutButtonContainer");
-                    // Create a container if it doesn't exist or call a generic guide.
-                    this.showIOSInstallGuide(); // Fallback to general iOS guide for now
-                } else { // manual
-                    this.showIOSInstallGuide();
-                }
-                this.iosDetector.markPromptShown();
-                return; // iOS handling is done
-            } else if (this.options.debug && !iosInfo.isStandalone) {
-                console.log("UniversalPWAInstaller: iOS detected, not standalone, but prompt already shown or not meeting criteria.");
-            }
+        if (this.currentOS === 'iOS' && this.options.enableIOSInstallPopup) {
+            this.showIOSInstallGuide();
         } else if (this.currentBrowser === 'Firefox' && this.options.enableFirefoxInstallGuide && this.currentOS !== 'iOS') {
             this.showFirefoxGuide();
         } else if (this.currentBrowser === 'SamsungInternet' && this.options.enableSamsungInstallGuide) {
@@ -5553,7 +5511,7 @@ class UniversalPWAInstaller {
         if (this.options.debug) console.log(`UniversalPWAInstaller (showManualInstallGuide): Showing guide for ${browserOrPlatform}.`);
         let title = `${this.options.appName} App installieren`;
         let content = '';
-        let fallbackInstructions = null;
+        let fallbackInstructions = null; // Declare here for broader scope
 
         switch(browserOrPlatform) {
             case 'Chrome':
@@ -5563,22 +5521,20 @@ class UniversalPWAInstaller {
                 content = this.createEdgeGuideContent('Desktop');
                 break;
             case 'SamsungBrowser':
-                const samsungInfo = detectSamsungDevice(); // Call detectSamsungDevice
-                if (this.options.debug) console.log("UniversalPWAInstaller (showManualInstallGuide): Samsung Device Info:", samsungInfo);
-                // Future: Use samsungInfo.supportsWebAPK to tailor createSamsungGuideContent if needed
+                // const samsungInfo = detectSamsungDevice(); // Already called in triggerAppropriateInstallGuide if needed, or handled by createSamsungGuideContent's internal logic
+                // if (this.options.debug) console.log("UniversalPWAInstaller (showManualInstallGuide): Samsung Device Info:", samsungInfo);
                 content = this.createSamsungGuideContent();
                 break;
             case 'Opera':
-                // For Opera, we can use a specific guide or the fallback. Let's use specific for now.
                 content = this.createOperaGuideContent(this.currentOS === 'Desktop' ? 'Desktop' : 'Mobile');
                 break;
             // iOS and Firefox have their own dedicated methods (showIOSInstallGuide, showFirefoxGuide)
-            // which are called from triggerAppropriateInstallGuide directly.
+            // which are called from triggerAppropriateInstallGuide if this method is part of that flow.
             default:
                 if (this.options.debug) console.log(`UniversalPWAInstaller (showManualInstallGuide): No specific guide for ${browserOrPlatform}. Using fallback.`);
                 const fallback = createBrowserFallback(this.currentBrowser || browserOrPlatform);
                 fallbackInstructions = fallback.instructions;
-                title = `${this.options.appName} hinzufügen`; // Set specific title for fallback
+                title = `${this.options.appName} hinzufügen`;
                 break;
         }
 
