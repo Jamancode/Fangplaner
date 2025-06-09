@@ -360,14 +360,27 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1rem; /* This is spacing *after* the header, keep for separation */
+            /* No explicit padding found, so height is content-driven. We'll adjust content. */
         }
 
         .card-title {
-            font-size: 1.25rem;
+            font-size: 1.1rem; /* Reduced from 1.25rem */
             font-weight: 600;
             color: var(--text-primary);
+            margin-bottom: 0.75rem; /* Explicitly set for controlled spacing */
         }
+
+        /* Ensure h2 elements used as card titles also get similar styling if not using .card-title class */
+        .card-header > h2 { /* Targets h2 direct children of card-header */
+            font-size: 1.1rem; /* Consistent with .card-title */
+            font-weight: 600; /* Consistent with .card-title */
+            color: var(--text-primary); /* Consistent with .card-title */
+            margin-bottom: 0.75rem; /* Consistent with .card-title */
+            /* If h2 might have other default margins, consider margin-top: 0; margin-left:0; margin-right:0; */
+            margin-top: 0;
+        }
+
 
         /* Angelgang Status Card */
         .angelgang-status {
@@ -426,7 +439,23 @@
              width: 100%;
         }
 
+      /* Universal Map Modal Sidebar Styles */
+      #catchMapSidebar {
+        /* Default width, padding, etc. are set in the @media (max-width: 768px) block
+           and also in the main #catchLocationMapModal #catchMapSidebar rule below.
+           We add transition here.
+        */
+        transition: width 0.3s ease-in-out, padding 0.3s ease-in-out;
+      }
 
+      #catchMapSidebar.collapsed {
+        width: 0 !important; /* Important to override other width settings */
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        overflow: hidden;
+        border-right: none !important;
+      }
+      /* End Universal Map Modal Sidebar Styles */
 
         .location-search-bar {
             display: flex;
@@ -845,16 +874,33 @@
         }
          /* Für Modals mit eigenem Padding-Handling */
         #catchLocationMapModal .modal-header {
-            padding: 1rem;
+            padding: 0.75rem 1rem; /* Reduced padding for compactness */
             margin-bottom: 0; /* Wird durch Flexbox geregelt */
             border-bottom: 1px solid var(--bg-tertiary);
             flex-shrink: 0; /* Header soll nicht schrumpfen */
+            display: flex; /* Ensure flex properties are explicitly set */
+            justify-content: space-between;
+            align-items: center;
         }
         #catchLocationMapModal .modal-header h2 {
-            font-size: 1.2rem;
+            font-size: 1.1rem; /* Slightly reduced title size */
+            margin-bottom: 0; /* Ensure no extra margin */
         }
-        #catchLocationMapModal .close-btn {
-            font-size: 1.2rem; width: 30px; height: 30px;
+        /* Ensure close button in this specific modal header is compact */
+        #catchLocationMapModal .modal-header .close-btn {
+            font-size: 1.2rem;
+            width: 30px;
+            height: 30px;
+            padding: 0; /* Remove extra padding if any from general .close-btn */
+            display: flex; /* Ensure icon is centered */
+            align-items: center;
+            justify-content: center;
+        }
+        /* Adjustments for the button group within the map modal header */
+        #catchLocationMapModal .modal-header > div { /* Target the div holding the buttons */
+            display: flex;
+            align-items: center;
+            gap: 0.5rem; /* Space between buttons */
         }
 
 
@@ -1689,6 +1735,20 @@
     }
 }
 
+        /* Desktop specific adjustments for weather widget to prevent overflow issues */
+        @media (min-width: 769px) {
+            .weather-widget {
+                /* Ensure it can scroll if content is too wide, matching mobile behavior */
+                /* overflow-x: auto; */ /* Decided against this for now, prefer items to fit */
+                /* flex-wrap: nowrap; */ /* Already default for flex container */
+            }
+            .weather-item {
+                /* Prevent items from shrinking too much if space is tight */
+                flex-shrink: 0;
+                 min-width: max-content; /* Ensure content visibility */
+            }
+        }
+
             .dashboard-grid {
                 grid-template-columns: 1fr;
             }
@@ -1737,7 +1797,7 @@
                 border-radius: 0; /* Keine Radien für Vollbild-Modal */
             }
              #catchLocationMapModal .modal-header {
-                padding: 0.75rem;
+                /* padding: 0.75rem; */ /* This is now the base style */
             }
              #catchLocationMapModal #catchMapSidebar {
                 width: 180px; /* Schmalere Sidebar auf Mobile */
@@ -1746,9 +1806,11 @@
                 overflow-y: auto; /* Allow sidebar to scroll its own content */
                  /* Einklapp-Logik wird in JS gesteuert, display: none; wenn eingeklappt */
             }
+            /* This rule is now global and uses width for transition
             #catchLocationMapModal #catchMapSidebar.collapsed {
                 display: none;
             }
+            */
 
             #catchLocationMapModal #catchMapSidebar h4 {
                 font-size: 0.9em;
@@ -3690,6 +3752,9 @@ function initializeCatchLocationMap() {
 
     catchLocationMap.on('click', function(e) {
         setTempCatchMarker(e.latlng, "Gewählter Punkt");
+        if (catchLocationMap) {
+            catchLocationMap.setView(e.latlng, 15); // Zoom to 15 for clicked point
+        }
         if (universalMapContext !== 'selectCatchLocation') {
              selectedGewaesserForCatchMap = null;
              document.querySelectorAll('#catchMapGewaesserList .gewaesser-item').forEach(item => item.classList.remove('selected-for-catch'));
@@ -3744,6 +3809,13 @@ function handleGewaesserMarkerClickUniversalMap(gewaesserId, gewaesserLocation) 
             universalMapEditingGewaesserId = gewaesserId;
             if (universalMapContext === 'manageGewaesserTab') {
                 alert(`Gewässer "${g.name}" ausgewählt. Passen Sie Name, Typ oder Position an und klicken Sie "Auswahl übernehmen", um zu speichern.`);
+            }
+            // Ensure map centers on the selected/edited Gewässer
+            if (catchLocationMap && gewaesserLocation) {
+                const coords = gewaesserLocation.split(',').map(c => parseFloat(c.trim()));
+                if (coords.length === 2 && !isNaN(coords[0]) && !isNaN(coords[1])) {
+                    catchLocationMap.setView(coords, 15); // Zoom to 15 for specific item focus
+                }
             }
         }
     } else {
@@ -3922,10 +3994,30 @@ function saveCatchLocationFromMap() {
 }
 function toggleUniversalMapSidebar() {
     const sidebar = document.getElementById('catchMapSidebar');
+    const toggleButton = document.querySelector('#catchLocationMapModal .modal-header .btn-icon[onclick="toggleUniversalMapSidebar()"]'); // More specific selector
+
     if (sidebar) {
-        sidebar.style.display = (sidebar.style.display === 'none' || sidebar.classList.contains('collapsed')) ? 'flex' : 'none';
-        sidebar.classList.toggle('collapsed', sidebar.style.display === 'none');
-        if (catchLocationMap) setTimeout(() => catchLocationMap.invalidateSize(), 250);
+        sidebar.classList.toggle('collapsed');
+
+        // Update button icon/text if needed
+        if (toggleButton) {
+            const icon = toggleButton.querySelector('i');
+            if (sidebar.classList.contains('collapsed')) {
+                toggleButton.title = "Sidebar einblenden";
+                if(icon) icon.className = 'fas fa-chevron-right'; // Or similar expand icon
+            } else {
+                toggleButton.title = "Sidebar ausklappen";
+                if(icon) icon.className = 'fas fa-bars'; // Or back to original icon
+            }
+        }
+
+        // It's crucial to invalidate the map size after sidebar changes
+        // Delay invalidateSize to allow CSS transition to complete
+        if (catchLocationMap) {
+            setTimeout(() => {
+                catchLocationMap.invalidateSize();
+            }, 300); // Match transition duration (0.3s)
+        }
     }
 }
 function toggleCollapsible(headerElement) {
