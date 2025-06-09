@@ -4980,6 +4980,115 @@ class ServiceWorkerManager {
 const swManager = new ServiceWorkerManager('/service-worker.js');
 
 // Dynamisches Hinzufügen von CSS für die Update-Benachrichtigung (optional, falls benötigt)
+
+// Intelligente Installationsstrategie für Chrome/Edge
+class ChromeInstallStrategy {
+    constructor() {
+        this.engagementScore = 0;
+        this.installPromptShown = false;
+        this.deferredPrompt = null; // Store the prompt event
+    }
+
+    setDeferredPrompt(prompt) {
+        this.deferredPrompt = prompt;
+    }
+
+    // Engagement-basierte Installation
+    trackEngagement() {
+        this.engagementScore++;
+        // Nach 3 Interaktionen: Installation anbieten
+        if (this.engagementScore >= 3 && !this.installPromptShown && this.deferredPrompt) {
+            this.showCustomInstallPrompt();
+        }
+    }
+
+    showCustomInstallPrompt() {
+        // Placeholder for custom modal. In a real scenario, this would build/show a styled modal.
+        // For now, it will directly trigger the browser's prompt if available.
+        if (!this.deferredPrompt) {
+            console.warn('ChromeInstallStrategy: Deferred prompt not available to show custom prompt.');
+            // Optionally, trigger a generic guide here if prompt is missing
+            if (window.pwaInstaller && typeof window.pwaInstaller.triggerAppropriateInstallGuide === 'function') {
+                window.pwaInstaller.triggerAppropriateInstallGuide();
+            }
+            return;
+        }
+
+        const modalId = 'customChromeInstallModal';
+        let modal = document.getElementById(modalId);
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = modalId;
+            modal.className = 'modal pwa-install-modal'; // Use existing modal classes for styling
+            // Basic structure similar to other modals in the app
+            modal.innerHTML = `
+                <div class="modal-content pwa-install-modal-content" style="max-width: 400px;">
+                    <div class="modal-header pwa-install-modal-header">
+                        <h2>${window.pwaInstaller && window.pwaInstaller.options.appName ? window.pwaInstaller.options.appName : 'App'} installieren</h2>
+                        <button type="button" class="close-btn pwa-install-close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body pwa-install-modal-body">
+                        <p>Für das beste Erlebnis, installieren Sie diese App auf Ihrem Gerät.</p>
+                        <button id="customInstallButton" class="btn btn-success btn-large" style="width:100%;">Jetzt installieren</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+
+            modal.querySelector('.close-btn').onclick = () => {
+                modal.classList.remove('active');
+                setTimeout(() => modal.remove(), 300);
+            };
+            modal.onclick = (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                    setTimeout(() => modal.remove(), 300);
+                }
+            };
+            document.getElementById('customInstallButton').onclick = () => {
+                if (this.deferredPrompt) {
+                    this.deferredPrompt.prompt();
+                    this.deferredPrompt.userChoice.then(({ outcome }) => {
+                        if (window.pwaInstaller && window.pwaInstaller.options.debug) console.log(`ChromeInstallStrategy: User response: ${outcome}`);
+                        this.installPromptShown = true; // Mark as shown regardless of outcome
+                        if (outcome === 'accepted' && window.pwaInstaller) {
+                            window.pwaInstaller.showSuccessMessage('Installation gestartet!');
+                        } else if (window.pwaInstaller) {
+                            window.pwaInstaller.showInstallErrorMessage('Installation abgelehnt oder abgebrochen.', false);
+                        }
+                    });
+                }
+                modal.classList.remove('active');
+                setTimeout(() => modal.remove(), 300);
+            };
+        }
+        modal.classList.add('active'); // Show the modal
+        this.installPromptShown = true;
+    }
+}
+
+// Samsung-spezifische Erkennung und Optimierung
+function detectSamsungDevice() {
+    const isSamsungBrowser = /SamsungBrowser/.test(navigator.userAgent);
+    // More specific Samsung device detection regex might be needed if general /SM-/ is too broad
+    const isSamsungDevice = /SM-|Galaxy|SCH-|SPH-|SGH-|GT-/.test(navigator.userAgent);
+
+    return {
+        browser: isSamsungBrowser,
+        device: isSamsungDevice, // This indicates a Samsung manufactured device
+        supportsWebAPK: isSamsungBrowser && isSamsungDevice // WebAPK more likely on Samsung device + Samsung Browser
+    };
+}
+
+// Fallback-Strategie für limitierte Browser
+function createBrowserFallback(browserName = 'diesem Browser') {
+    return {
+        installMethod: 'bookmark',
+        instructions: `Für ${browserName}, erstellen Sie am besten ein Lesezeichen für schnellen Zugriff. Die volle App-Installation wird möglicherweise nicht unterstützt.`,
+        showAdvancedFeatures: false,
+        cacheStrategy: 'minimal' // Could inform service worker if needed
+    };
+}
 // Dies stellt sicher, dass die CSS-Variablen auch im JS verfügbar sind.
 const swStyles = document.createElement('style');
 swStyles.textContent = `
@@ -4990,6 +5099,161 @@ swStyles.textContent = `
     }
 `;
 document.head.appendChild(swStyles);
+
+class iOSSmartDetector {
+    constructor(options = {}) {
+        this.options = options; // e.g., appName from UniversalPWAInstaller
+        this.userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    }
+
+    detect() {
+        const isIOS = /iPad|iPhone|iPod/.test(this.userAgent) && !window.MSStream;
+        const isInStandaloneMode = ('standalone' in window.navigator) && (window.navigator.standalone === true);
+        const hasShownPrompt = localStorage.getItem('ios-prompt-shown');
+
+        return {
+            isIOS,
+            isStandalone: isInStandaloneMode,
+            shouldShowPrompt: isIOS && !isInStandaloneMode && !hasShownPrompt,
+            installMethod: this.determineInstallMethod(isIOS)
+        };
+    }
+
+    determineInstallMethod(isIOSDevice) {
+        if (!isIOSDevice) return 'none';
+        // For simplicity in this step, we'll default to 'guided'.
+        // const isRecent = this.isiOSRecent();
+        // const hasShortcutsApp = await this.hasShortcutsApp(); // hasShortcutsApp might be async
+
+        // if (hasShortcutsApp) return 'shortcuts';
+        // if (isRecent) return 'guided';
+        return 'guided'; // Defaulting to guided for now. Can be expanded.
+    }
+
+    isiOSRecent() {
+        const match = this.userAgent.match(/OS (\d+)_/);
+        const version = match ? parseInt(match[1]) : 0;
+        return version >= 14; // iOS 14+ generally has better PWA support
+    }
+
+    hasShortcutsApp() {
+        // This is very difficult to detect reliably from within the browser.
+        // For this example, we might assume it's available on recent iOS,
+        // or rely on the user to know if they have the Shortcuts app.
+        // Consider this true for iOS 14+ for now for demonstration.
+        return this.isiOSRecent();
+    }
+
+    markPromptShown() {
+        localStorage.setItem('ios-prompt-shown', 'true');
+    }
+}
+
+class iOSInstallAssistant {
+    constructor(options = {}) {
+        this.options = options; // e.g., appName
+    }
+
+    show() {
+        const existingModal = document.getElementById('iosInstallVisualGuide');
+        if (existingModal) existingModal.remove();
+
+        const assistantModal = document.createElement('div');
+        assistantModal.id = 'iosInstallVisualGuide';
+        assistantModal.className = 'modal pwa-install-modal active'; // Use existing modal classes
+        assistantModal.style.zIndex = '2900'; // Ensure it's above other modals if necessary
+
+        // Using FontAwesome icons as placeholders for image paths
+        assistantModal.innerHTML = `
+            <div class="modal-content pwa-install-modal-content">
+                <div class="modal-header pwa-install-modal-header">
+                    <h2>${this.options.appName || 'App'} installieren (iOS)</h2>
+                    <button type="button" class="close-btn pwa-install-close-btn">&times;</button>
+                </div>
+                <div class="modal-body pwa-install-modal-body ios-step-guide">
+                    <div class="step active" data-step="1" style="text-align:center; padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+                        <p style="font-size:1.1em;">1. Tippen Sie auf das Teilen-Symbol unten:</p>
+                        <i class="fas fa-share-square fa-2x" style="color:#007aff;"></i>
+                        <div class="arrow-down" style="font-size:1.5em; margin-top:5px;">⬇️</div>
+                    </div>
+                    <div class="step" data-step="2" style="text-align:center; padding-bottom:10px; border-bottom:1px solid #eee; margin-bottom:10px;">
+                        <p style="font-size:1.1em;">2. Scrollen Sie und wählen Sie "Zum Home-Bildschirm":</p>
+                        <i class="fas fa-plus-square fa-2x" style="color:#007aff;"></i>
+                    </div>
+                    <div class="step" data-step="3" style="text-align:center;">
+                        <p style="font-size:1.1em;">3. Tippen Sie oben rechts auf "Hinzufügen":</p>
+                        <i class="fas fa-check-circle fa-2x" style="color:#007aff;"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(assistantModal);
+
+        assistantModal.querySelector('.close-btn').onclick = () => {
+            assistantModal.classList.remove('active');
+            setTimeout(() => assistantModal.remove(), 300);
+        };
+        assistantModal.onclick = (e) => {
+            if (e.target === assistantModal) {
+                assistantModal.classList.remove('active');
+                setTimeout(() => assistantModal.remove(), 300);
+            }
+        };
+        // this.startInteractiveGuide(assistantModal); // Interactive part can be complex
+    }
+
+    // startInteractiveGuide(assistant) { ... } // Implementation deferred for brevity if too complex for one step
+}
+
+// iOS Shortcuts Integration
+function createiOSShortcut(appName, appURL, base64IconData) {
+    const shortcutData = {
+        "WFWorkflowActions": [
+            {
+                "WFWorkflowActionIdentifier": "is.workflow.actions.openurl",
+                "WFWorkflowActionParameters": { "WFInput": appURL }
+            },
+            // The original share action might not directly lead to A2HS.
+            // A more reliable shortcut would open Safari and instruct the user.
+            // For now, let's make a shortcut that just opens the app URL.
+            // A true "Add to Home Screen" shortcut is very complex to achieve directly.
+        ],
+        "WFWorkflowName": `Öffne ${appName}`, // Changed to be more direct
+        "WFWorkflowIcon": {
+            "WFWorkflowIconImageData": base64IconData || "", // Placeholder
+            "WFWorkflowIconGlyphNumber": 59648 // Safari icon glyph
+        }
+    };
+    // Create a Blob from the JSON data
+    const blob = new Blob([JSON.stringify(shortcutData)], { type: 'application/vnd.apple.shortcut' });
+    const fileUrl = URL.createObjectURL(blob);
+
+    // For direct import, the structure is often more complex and requires a signed .shortcut file.
+    // This creates a downloadable .shortcut file.
+    // The direct `shortcuts://import-workflow` is less reliable for complex workflows from web.
+    return fileUrl; // Returns a URL to the blob for download
+}
+
+function showShortcutOption(appName, appURL, base64IconData, targetElementId) {
+    const targetElement = document.getElementById(targetElementId);
+    if (!targetElement) {
+        console.warn('Target element for iOS shortcut button not found:', targetElementId);
+        return;
+    }
+
+    const shortcutURL = createiOSShortcut(appName, appURL, base64IconData);
+    const button = document.createElement('a');
+    button.href = shortcutURL;
+    button.className = 'btn btn-info'; // Use existing app styling
+    button.innerHTML = '<i class="fas fa-link"></i> iOS Shortcut erstellen';
+    button.title = 'Erstellt einen Shortcut, um die App schneller zu öffnen';
+    button.download = `${appName.replace(/\s+/g, '_')}.shortcut`; // Suggest a filename
+
+    // Clear previous button if any
+    targetElement.innerHTML = '';
+    targetElement.appendChild(button);
+    targetElement.style.display = 'block'; // Make sure it's visible
+}
 
 // ============================================================================
 // UniversalPWAInstaller Class
@@ -5021,12 +5285,16 @@ class UniversalPWAInstaller {
         this.currentBrowser = this.detectBrowser();
         this.currentOS = this.detectOS();
         this.installSource = 'direct'; // Default, can be overridden by URL params
+        this.chromeStrategy = new ChromeInstallStrategy();
+        this.iosDetector = new iOSSmartDetector({ appName: this.options.appName }); // Added
+        this.iosAssistant = new iOSInstallAssistant({ appName: this.options.appName }); // Added
 
         this.init();
     }
 
     init() {
         if (this.options.debug) console.log('UniversalPWAInstaller: Initializing...');
+        document.body.addEventListener('click', () => { if (this.chromeStrategy) this.chromeStrategy.trackEngagement(); }, true); // Added for engagement tracking
         this.setupEventListeners();
         this.initPlatformSpecificFeatures();
         this.addCoreInstallStyles(); // Basis-Styling für Modals etc.
@@ -5060,7 +5328,8 @@ class UniversalPWAInstaller {
     setupEventListeners() {
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
-            this.deferredPrompt = e;
+            this.chromeStrategy.setDeferredPrompt(e); // Modified
+            this.deferredPrompt = e; // Modified - keep local copy
             this.enhanceBeforeInstallPrompt(e); // Point D
             if (this.installButton) {
                 this.installButton.style.display = 'block';
@@ -5081,8 +5350,10 @@ class UniversalPWAInstaller {
         // Fallback-Logik für den Installationsbutton, falls 'beforeinstallprompt' nicht feuert
         if (this.installButton) {
             this.installButton.addEventListener('click', () => {
-                if (this.deferredPrompt) {
-                    this.promptInstall();
+                if ((this.currentBrowser === 'Chrome' || this.currentBrowser === 'Edge') && this.chromeStrategy && this.chromeStrategy.deferredPrompt) {
+                    this.chromeStrategy.showCustomInstallPrompt();
+                } else if (this.deferredPrompt) {
+                    this.promptInstall(); // Original prompt for other cases
                 } else {
                     this.triggerAppropriateInstallGuide();
                 }
@@ -5091,6 +5362,11 @@ class UniversalPWAInstaller {
     }
 
     promptInstall() {
+        if ((this.currentBrowser === 'Chrome' || this.currentBrowser === 'Edge') && this.chromeStrategy && this.chromeStrategy.deferredPrompt) {
+            this.chromeStrategy.showCustomInstallPrompt();
+            return;
+        }
+
         if (this.deferredPrompt) {
             this.deferredPrompt.prompt();
             this.deferredPrompt.userChoice.then(({ outcome }) => {
@@ -5118,8 +5394,27 @@ class UniversalPWAInstaller {
 
         if (this.options.debug) console.log(`UniversalPWAInstaller: Triggering guide for OS: ${this.currentOS}, Browser: ${this.currentBrowser}`);
 
-        if (this.currentOS === 'iOS' && this.options.enableIOSInstallPopup) {
-            this.showIOSInstallGuide();
+        const iosInfo = this.iosDetector.detect();
+        if (iosInfo.isIOS && !iosInfo.isStandalone) {
+            if (iosInfo.shouldShowPrompt) {
+                if (iosInfo.installMethod === 'guided') {
+                    this.iosAssistant.show();
+                } else if (iosInfo.installMethod === 'shortcuts') {
+                    // We'll need a placeholder for base64 icon data initially
+                    // This will be filled in a subsequent step.
+                    // For now, just log that it would show.
+                    console.log("iOS Shortcut method selected - UI button would be shown here.");
+                    // showShortcutOption(this.options.appName, window.location.href, "PLACEHOLDER_BASE64_ICON_DATA", "iosShortcutButtonContainer");
+                    // Create a container if it doesn't exist or call a generic guide.
+                    this.showIOSInstallGuide(); // Fallback to general iOS guide for now
+                } else { // manual
+                    this.showIOSInstallGuide();
+                }
+                this.iosDetector.markPromptShown();
+                return; // iOS handling is done
+            } else if (this.options.debug && !iosInfo.isStandalone) {
+                console.log("UniversalPWAInstaller: iOS detected, not standalone, but prompt already shown or not meeting criteria.");
+            }
         } else if (this.currentBrowser === 'Firefox' && this.options.enableFirefoxInstallGuide && this.currentOS !== 'iOS') {
             this.showFirefoxGuide();
         } else if (this.currentBrowser === 'SamsungInternet' && this.options.enableSamsungInstallGuide) {
@@ -5258,18 +5553,40 @@ class UniversalPWAInstaller {
         if (this.options.debug) console.log(`UniversalPWAInstaller (showManualInstallGuide): Showing guide for ${browserOrPlatform}.`);
         let title = `${this.options.appName} App installieren`;
         let content = '';
+        let fallbackInstructions = null;
 
         switch(browserOrPlatform) {
-            case 'Chrome': content = this.createChromeGuideContent('Desktop'); break;
-            case 'Edge': content = this.createEdgeGuideContent('Desktop'); break;
-            case 'SamsungBrowser': content = this.createSamsungGuideContent(); break;
-            case 'Opera': content = this.createOperaGuideContent('Desktop'); break;
+            case 'Chrome':
+                content = this.createChromeGuideContent('Desktop');
+                break;
+            case 'Edge':
+                content = this.createEdgeGuideContent('Desktop');
+                break;
+            case 'SamsungBrowser':
+                const samsungInfo = detectSamsungDevice(); // Call detectSamsungDevice
+                if (this.options.debug) console.log("UniversalPWAInstaller (showManualInstallGuide): Samsung Device Info:", samsungInfo);
+                // Future: Use samsungInfo.supportsWebAPK to tailor createSamsungGuideContent if needed
+                content = this.createSamsungGuideContent();
+                break;
+            case 'Opera':
+                // For Opera, we can use a specific guide or the fallback. Let's use specific for now.
+                content = this.createOperaGuideContent(this.currentOS === 'Desktop' ? 'Desktop' : 'Mobile');
+                break;
             // iOS and Firefox have their own dedicated methods (showIOSInstallGuide, showFirefoxGuide)
+            // which are called from triggerAppropriateInstallGuide directly.
             default:
-                if (this.options.debug) console.log(`UniversalPWAInstaller (showManualInstallGuide): No specific guide for ${browserOrPlatform}.`);
-                return; // No generic guide for now, or could show a very basic one.
+                if (this.options.debug) console.log(`UniversalPWAInstaller (showManualInstallGuide): No specific guide for ${browserOrPlatform}. Using fallback.`);
+                const fallback = createBrowserFallback(this.currentBrowser || browserOrPlatform);
+                fallbackInstructions = fallback.instructions;
+                title = `${this.options.appName} hinzufügen`; // Set specific title for fallback
+                break;
         }
-        if (content) this.createInstallModal(title, content);
+
+        if (content) {
+            this.createInstallModal(title, content);
+        } else if (fallbackInstructions) {
+            this.createInstallModal(title, `<p>${fallbackInstructions}</p>`);
+        }
     }
 
     createChromeGuideContent(platform = 'Desktop') {
