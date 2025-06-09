@@ -280,6 +280,14 @@
             font-size: 1.2rem;
         }
 
+        /* Specifically color the temperature span */
+        #temperature {
+            color: #40127c; /* Using the dark purple from --primary-gradient */
+        }
+        [data-theme="dark"] #temperature {
+            color: #a389cc; /* A lighter purple for dark mode, adjust as needed */
+        }
+
         /* Main Container */
         .container {
             max-width: 1400px;
@@ -1798,18 +1806,26 @@
             }
              #catchLocationMapModal .modal-header {
                 /* padding: 0.75rem; */ /* This is now the base style */
+                 /* font-size: 1rem; /* Reduced title size further if needed */
             }
              #catchLocationMapModal #catchMapSidebar {
-                width: 180px; /* Schmalere Sidebar auf Mobile */
-                padding: 0.5rem;
-                flex-shrink: 0; /* Verhindert Schrumpfen der Sidebar */
-                overflow-y: auto; /* Allow sidebar to scroll its own content */
-                 /* Einklapp-Logik wird in JS gesteuert, display: none; wenn eingeklappt */
+                /* Default state on mobile: collapsed */
+                width: 0 !important;
+                padding-left: 0 !important;
+                padding-right: 0 !important;
+                overflow: hidden !important;
+                border-right: none !important;
+                flex-shrink: 0;
             }
-            /* This rule is now global and uses width for transition
-            #catchLocationMapModal #catchMapSidebar.collapsed {
-                display: none;
+            #catchLocationMapModal #catchMapSidebar.sidebar-expanded-mobile {
+                width: 180px !important; /* Expanded width on mobile */
+                padding: 0.5rem !important; /* Re-apply padding */
+                overflow-y: auto !important; /* Allow content scroll when expanded */
+                border-right: 1px solid var(--bg-tertiary) !important; /* Re-apply border */
             }
+            /* The global .collapsed rule is for desktop/manual toggle.
+               The JS will need to distinguish between mobile toggle (using .sidebar-expanded-mobile)
+               and desktop toggle (using .collapsed) or reconcile them.
             */
 
             #catchLocationMapModal #catchMapSidebar h4 {
@@ -2888,6 +2904,7 @@ baitOptionsByMethod[""] = [{value: "", text: "Erst Angelmethode wählen..."}]; /
 // Initialize Application
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
+    applyRippleEffect(); // Ensure ripple effect is initialized
 });
 
 function updateConnectionStatus() {
@@ -3587,12 +3604,50 @@ function updateSelectedCatchGewaesserInfo(gewaesserId, locationCoords) {
 
 
 // Universal Map Modal Functions
+
+// Helper function to update sidebar toggle button icon and title
+function updateSidebarToggleButtonIcon(sidebarElement, isMobileView) {
+    const toggleButton = document.querySelector('#catchLocationMapModal .modal-header button[onclick="toggleUniversalMapSidebar()"]');
+    if (!toggleButton) return;
+    const icon = toggleButton.querySelector('i');
+    if (!icon) return;
+
+    let isEffectivelyCollapsed;
+    if (isMobileView) {
+        isEffectivelyCollapsed = !sidebarElement.classList.contains('sidebar-expanded-mobile');
+    } else {
+        isEffectivelyCollapsed = sidebarElement.classList.contains('collapsed');
+    }
+
+    if (isEffectivelyCollapsed) {
+        icon.className = 'fas fa-chevron-right'; // Icon for "expand"
+        toggleButton.title = 'Sidebar einblenden';
+    } else {
+        icon.className = 'fas fa-chevron-left'; // Icon for "collapse"
+        toggleButton.title = 'Sidebar einklappen';
+    }
+}
+
 function openUniversalMapModal(context, targetGewaesserIdFieldId, targetCoordsFieldId, displayCallbackName, showSidebar = true) {
     universalMapContext = context;
     universalMapTargetInputGewaesserId = targetGewaesserIdFieldId;
     universalMapTargetInputCoords = targetCoordsFieldId;
     universalMapTargetDisplayCallback = displayCallbackName;
     universalMapEditingGewaesserId = null; // Reset Bearbeitungs-ID
+
+    const sidebar = document.getElementById('catchMapSidebar');
+    const isMobile = window.innerWidth < 768; // Consistent with CSS media query
+
+    if (sidebar) {
+        if (isMobile) {
+            sidebar.classList.remove('sidebar-expanded-mobile'); // Default collapsed on mobile
+            sidebar.classList.remove('collapsed'); // Clean up global collapse class
+        } else {
+            sidebar.classList.remove('sidebar-expanded-mobile'); // Not applicable for desktop
+            sidebar.classList.remove('collapsed'); // Default expanded on desktop
+        }
+        updateSidebarToggleButtonIcon(sidebar, isMobile); // Set initial icon
+    }
 
     const modalTitleEl = document.getElementById('catchLocationMapModalTitle');
     const newSpotSectionTitleEl = document.getElementById('newSpotSectionTitle');
@@ -3732,8 +3787,9 @@ function closeCatchLocationMapModal() {
     document.querySelectorAll('#catchMapGewaesserList .gewaesser-item').forEach(item => item.classList.remove('selected-for-catch'));
     document.getElementById('newSpotNameInput').value = '';
     document.getElementById('newSpotNameInput').disabled = false;
-    if (catchLocationMap) catchLocationMap.invalidateSize();
+    // Map invalidation will be handled at the end of openUniversalMapModal after modal is active
 }
+
 function initializeCatchLocationMap() {
     if (catchLocationMap) {
         catchLocationMap.invalidateSize();
@@ -3767,7 +3823,7 @@ function initializeCatchLocationMap() {
     });
 
     loadGewaesserMarkersToUniversalMap();
-    setTimeout(() => { if (catchLocationMap) catchLocationMap.invalidateSize() }, 200);
+    // setTimeout for invalidateSize moved to openUniversalMapModal for better timing
 }
 function loadGewaesserMarkersToUniversalMap() {
     if (!catchLocationMap) return;
@@ -3991,35 +4047,31 @@ function saveCatchLocationFromMap() {
     }
 
     closeCatchLocationMapModal();
+    // Invalidate size is now handled when opening the modal and by toggle function
 }
+
 function toggleUniversalMapSidebar() {
     const sidebar = document.getElementById('catchMapSidebar');
-    const toggleButton = document.querySelector('#catchLocationMapModal .modal-header .btn-icon[onclick="toggleUniversalMapSidebar()"]'); // More specific selector
+    if (!sidebar) return;
 
-    if (sidebar) {
+    const isMobile = window.innerWidth < 768;
+
+    if (isMobile) {
+        sidebar.classList.toggle('sidebar-expanded-mobile');
+    } else {
         sidebar.classList.toggle('collapsed');
+    }
 
-        // Update button icon/text if needed
-        if (toggleButton) {
-            const icon = toggleButton.querySelector('i');
-            if (sidebar.classList.contains('collapsed')) {
-                toggleButton.title = "Sidebar einblenden";
-                if(icon) icon.className = 'fas fa-chevron-right'; // Or similar expand icon
-            } else {
-                toggleButton.title = "Sidebar ausklappen";
-                if(icon) icon.className = 'fas fa-bars'; // Or back to original icon
-            }
-        }
+    updateSidebarToggleButtonIcon(sidebar, isMobile);
 
-        // It's crucial to invalidate the map size after sidebar changes
-        // Delay invalidateSize to allow CSS transition to complete
-        if (catchLocationMap) {
-            setTimeout(() => {
-                catchLocationMap.invalidateSize();
-            }, 300); // Match transition duration (0.3s)
-        }
+    // It's crucial to invalidate the map size after sidebar changes
+    if (catchLocationMap) {
+        setTimeout(() => {
+            catchLocationMap.invalidateSize();
+        }, 350); // Slightly longer than CSS transition (0.3s)
     }
 }
+
 function toggleCollapsible(headerElement) {
     const content = headerElement.nextElementSibling;
     const icon = headerElement.querySelector('i.fa-chevron-down');
